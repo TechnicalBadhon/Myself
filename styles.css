@@ -385,6 +385,10 @@ body::before {
     font-size: 1.2rem;
 }
 
+.user-name {
+    font-weight: 500;
+}
+
 .stats-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
