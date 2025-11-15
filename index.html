@@ -3,1189 +3,447 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusFreelance | Futuristic Freelancing Platform</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #00f3ff;
-            --secondary: #8a2be2;
-            --accent: #ff00c8;
-            --dark: #0a0a1a;
-            --darker: #050510;
-            --light: #f0f9ff;
-            --glass: rgba(10, 15, 30, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --success: #00ff9d;
-            --warning: #ffcc00;
-            --danger: #ff3860;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, var(--darker), #1a1a2e, var(--dark));
-            color: var(--light);
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
-            background-attachment: fixed;
-        }
-
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 10% 20%, rgba(138, 43, 226, 0.1) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(0, 243, 255, 0.1) 0%, transparent 20%);
-            z-index: -1;
-        }
-
-        /* Custom cursor */
-        body {
-            cursor: none;
-        }
-
-        .cursor {
-            position: fixed;
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--primary);
-            border-radius: 50%;
-            background: transparent;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            z-index: 9999;
-            mix-blend-mode: difference;
-            transition: transform 0.1s ease, width 0.3s ease, height 0.3s ease;
-        }
-
-        .cursor-follower {
-            position: fixed;
-            width: 40px;
-            height: 40px;
-            border: 1px solid rgba(0, 243, 255, 0.5);
-            border-radius: 50%;
-            background: rgba(0, 243, 255, 0.1);
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            z-index: 9998;
-            transition: transform 0.3s ease;
-        }
-
-        .cursor:hover {
-            transform: translate(-50%, -50%) scale(1.5);
-            background: var(--primary);
-        }
-
-        /* Navigation */
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.5rem 5%;
-            position: relative;
-            z-index: 100;
-        }
-
-        .logo {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-        }
-
-        .nav-links a {
-            color: var(--light);
-            text-decoration: none;
-            font-weight: 500;
-            position: relative;
-            padding: 0.5rem 0;
-            transition: color 0.3s ease;
-        }
-
-        .nav-links a:hover {
-            color: var(--primary);
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--primary);
-            transition: width 0.3s ease;
-        }
-
-        .nav-links a:hover::after {
-            width: 100%;
-        }
-
-        .auth-buttons {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .btn {
-            padding: 0.7rem 1.5rem;
-            border-radius: 50px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: none;
-            font-family: 'Poppins', sans-serif;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 0.9rem;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--primary);
-            color: var(--primary);
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
-        }
-
-        .btn-outline:hover {
-            background: var(--primary);
-            color: var(--dark);
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
-        }
-
-        .btn-primary {
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            color: var(--dark);
-            box-shadow: 0 0 15px rgba(138, 43, 226, 0.4);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 20px rgba(138, 43, 226, 0.6);
-        }
-
-        /* Hero Section */
-        .hero {
-            display: flex;
-            align-items: center;
-            min-height: 90vh;
-            padding: 0 5%;
-            position: relative;
-        }
-
-        .hero-content {
-            flex: 1;
-            max-width: 600px;
-            z-index: 2;
-        }
-
-        .hero h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            line-height: 1.2;
-            margin-bottom: 1.5rem;
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .hero h1 span {
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hero p {
-            font-size: 1.2rem;
-            line-height: 1.7;
-            margin-bottom: 2rem;
-            color: #d0e7ff;
-            max-width: 500px;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-
-        .hero-image {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-        }
-
-        .glass-card {
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 20px;
-            border: 1px solid var(--glass-border);
-            padding: 2rem;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            position: relative;
-            overflow: hidden;
-            width: 100%;
-            max-width: 500px;
-        }
-
-        .glass-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(0, 243, 255, 0.1), transparent);
-            transform: rotate(0deg);
-            animation: shine 6s infinite;
-            z-index: -1;
-        }
-
-        @keyframes shine {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .card-title {
-            font-size: 1.8rem;
-            margin-bottom: 1.5rem;
-            color: var(--primary);
-            position: relative;
-            padding-bottom: 0.8rem;
-        }
-
-        .card-title::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 60px;
-            height: 3px;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            border-radius: 3px;
-        }
-
-        .feature-list {
-            list-style: none;
-            margin: 1.5rem 0;
-        }
-
-        .feature-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1.2rem;
-            padding: 0.8rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            transition: transform 0.3s ease, background 0.3s ease;
-        }
-
-        .feature-item:hover {
-            transform: translateX(10px);
-            background: rgba(0, 243, 255, 0.1);
-        }
-
-        .feature-icon {
-            width: 40px;
-            height: 40px;
-            background: rgba(0, 243, 255, 0.1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 1rem;
-            color: var(--primary);
-        }
-
-        /* Dashboard Preview */
-        .dashboard-preview {
-            padding: 5rem 5%;
-            position: relative;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 3rem;
-            font-family: 'Orbitron', sans-serif;
-            position: relative;
-        }
-
-        .section-title span {
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            border-radius: 2px;
-        }
-
-        .dashboard-container {
-            display: flex;
-            gap: 2rem;
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 20px;
-            border: 1px solid var(--glass-border);
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .sidebar {
-            width: 250px;
-            background: rgba(10, 15, 30, 0.8);
-            padding: 2rem 1rem;
-            border-right: 1px solid var(--glass-border);
-        }
-
-        .sidebar-item {
-            padding: 0.8rem 1.5rem;
-            margin-bottom: 0.8rem;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-        }
-
-        .sidebar-item:hover, .sidebar-item.active {
-            background: rgba(0, 243, 255, 0.1);
-            color: var(--primary);
-        }
-
-        .sidebar-item i {
-            margin-right: 1rem;
-            width: 24px;
-            text-align: center;
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 2rem;
-        }
-
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .greeting {
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(45deg, var(--primary), var(--secondary));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 1.2rem;
-        }
-
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .stat-title {
-            color: #a0b9d8;
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-change {
-            display: flex;
-            align-items: center;
-            font-size: 0.9rem;
-        }
-
-        .positive {
-            color: var(--success);
-        }
-
-        .negative {
-            color: var(--danger);
-        }
-
-        .projects-section {
-            margin-top: 2rem;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .projects-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .project-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 1.5rem;
-            transition: all 0.3s ease;
-            border: 1px solid transparent;
-        }
-
-        .project-card:hover {
-            border: 1px solid var(--primary);
-            transform: translateY(-5px);
-        }
-
-        .project-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .project-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .status {
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        .status-pending {
-            background: rgba(255, 204, 0, 0.1);
-            color: var(--warning);
-        }
-
-        .status-progress {
-            background: rgba(0, 243, 255, 0.1);
-            color: var(--primary);
-        }
-
-        .status-completed {
-            background: rgba(0, 255, 157, 0.1);
-            color: var(--success);
-        }
-
-        .project-info {
-            margin: 1rem 0;
-            color: #a0b9d8;
-            font-size: 0.9rem;
-        }
-
-        .project-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 1rem;
-        }
-
-        .deadline {
-            font-size: 0.9rem;
-            color: #a0b9d8;
-        }
-
-        .progress-container {
-            margin: 1.5rem 0;
-        }
-
-        .progress-bar {
-            height: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .progress {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            border-radius: 4px;
-        }
-
-        /* Chat Preview */
-        .chat-container {
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 20px;
-            border: 1px solid var(--glass-border);
-            height: 500px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .chat-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--glass-border);
-            display: flex;
-            align-items: center;
-        }
-
-        .chat-user {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .chat-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(45deg, var(--secondary), var(--accent));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
-        .chat-name {
-            font-weight: 600;
-        }
-
-        .online-status {
-            width: 10px;
-            height: 10px;
-            background: var(--success);
-            border-radius: 50%;
-            margin-left: 0.5rem;
-        }
-
-        .chat-messages {
-            flex: 1;
-            padding: 1.5rem;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .message {
-            max-width: 70%;
-            padding: 1rem;
-            border-radius: 15px;
-            position: relative;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .received {
-            align-self: flex-start;
-            background: rgba(255, 255, 255, 0.05);
-            border-bottom-left-radius: 5px;
-        }
-
-        .sent {
-            align-self: flex-end;
-            background: rgba(0, 243, 255, 0.15);
-            border-bottom-right-radius: 5px;
-        }
-
-        .message-time {
-            font-size: 0.7rem;
-            color: #a0b9d8;
-            text-align: right;
-            margin-top: 0.3rem;
-        }
-
-        .chat-input {
-            padding: 1.5rem;
-            border-top: 1px solid var(--glass-border);
-            display: flex;
-            gap: 1rem;
-        }
-
-        .message-input {
-            flex: 1;
-            padding: 0.8rem 1.2rem;
-            border-radius: 50px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            color: var(--light);
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .message-input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .send-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(45deg, var(--primary), var(--secondary));
-            border: none;
-            color: var(--dark);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.3s ease;
-        }
-
-        .send-btn:hover {
-            transform: scale(1.05);
-        }
-
-        /* Features Section */
-        .features {
-            padding: 5rem 5%;
-            position: relative;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-
-        .feature-card {
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 20px;
-            border: 1px solid var(--glass-border);
-            padding: 2rem;
-            text-align: center;
-            transition: all 0.4s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(0, 243, 255, 0.3);
-        }
-
-        .feature-icon-lg {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1.5rem;
-            border-radius: 50%;
-            background: rgba(0, 243, 255, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            color: var(--primary);
-        }
-
-        .feature-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .feature-card p {
-            color: #a0b9d8;
-            line-height: 1.6;
-        }
-
-        /* Footer */
-        footer {
-            padding: 4rem 5% 2rem;
-            background: rgba(5, 5, 16, 0.8);
-            border-top: 1px solid var(--glass-border);
-        }
-
-        .footer-content {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-
-        .footer-column h3 {
-            font-size: 1.3rem;
-            margin-bottom: 1.5rem;
-            position: relative;
-            padding-bottom: 0.8rem;
-        }
-
-        .footer-column h3::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 40px;
-            height: 3px;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            border-radius: 3px;
-        }
-
-        .footer-links {
-            list-style: none;
-        }
-
-        .footer-links li {
-            margin-bottom: 0.8rem;
-        }
-
-        .footer-links a {
-            color: #a0b9d8;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .footer-links a:hover {
-            color: var(--primary);
-        }
-
-        .social-icons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-
-        .social-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .social-icon:hover {
-            background: var(--primary);
-            transform: translateY(-5px);
-        }
-
-        .copyright {
-            text-align: center;
-            padding-top: 2rem;
-            border-top: 1px solid var(--glass-border);
-            color: #a0b9d8;
-            font-size: 0.9rem;
-        }
-
-        /* Animations */
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-            100% { transform: translateY(0px); }
-        }
-
-        .floating {
-            animation: float 6s ease-in-out infinite;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 992px) {
-            .hero {
-                flex-direction: column;
-                text-align: center;
-                padding-top: 2rem;
-            }
-            
-            .hero-content {
-                margin-bottom: 3rem;
-            }
-            
-            .hero h1 {
-                font-size: 2.8rem;
-            }
-            
-            .hero-buttons {
-                justify-content: center;
-            }
-            
-            .dashboard-container {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
-                padding: 1rem;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
-            
-            .hero h1 {
-                font-size: 2.3rem;
-            }
-            
-            .hero p {
-                font-size: 1rem;
-            }
-            
-            .section-title {
-                font-size: 2rem;
-            }
-            
-            .stats-container {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .hero-buttons {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .btn {
-                width: 100%;
-            }
-            
-            .chat-container {
-                height: 400px;
-            }
-        }
-    </style>
+    <title>NexusFreelance | Professional Platform</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Custom Cursor -->
-    <div class="cursor"></div>
-    <div class="cursor-follower"></div>
-
     <!-- Navigation -->
-    <nav>
-        <div class="logo">NEXUS<span>FL</span></div>
-        <div class="nav-links">
-            <a href="#">Home</a>
-            <a href="#">Features</a>
-            <a href="#">How It Works</a>
-            <a href="#">Pricing</a>
-            <a href="#">Contact</a>
-        </div>
-        <div class="auth-buttons">
-            <button class="btn btn-outline">Sign In</button>
-            <button class="btn btn-primary">Get Started</button>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">NEXUS<span>FL</span></div>
+            <div class="nav-links">
+                <a href="#" class="nav-link">Home</a>
+                <a href="#" class="nav-link">Projects</a>
+                <a href="#" class="nav-link">Freelancers</a>
+                <a href="#" class="nav-link">How It Works</a>
+                <a href="#" class="nav-link">Pricing</a>
+            </div>
+            <div class="auth-buttons">
+                <button id="loginBtn" class="btn btn-outline">Sign In</button>
+                <button id="signupBtn" class="btn btn-primary">Get Started</button>
+            </div>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-content">
-            <h1>Connect with <span>Talent</span> in Real-Time</h1>
-            <p>NexusFreelance is the next-generation platform where clients and freelancers collaborate seamlessly with AI-powered matching, secure payments, and real-time communication.</p>
-            <div class="hero-buttons">
-                <button class="btn btn-primary">Find Talent</button>
-                <button class="btn btn-outline">Join as Freelancer</button>
+    <!-- Main Content -->
+    <main class="main-container">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Connect with <span>Talent</span> in Real-Time</h1>
+                <p>NexusFreelance is the next-generation platform where clients and freelancers collaborate seamlessly with AI-powered matching, secure payments, and real-time communication.</p>
+                <div class="hero-buttons">
+                    <button id="findTalentBtn" class="btn btn-primary">Find Talent</button>
+                    <button id="joinAsFreelancerBtn" class="btn btn-outline">Join as Freelancer</button>
+                </div>
             </div>
-        </div>
-        <div class="hero-image">
-            <div class="glass-card floating">
-                <h2 class="card-title">Why Choose NexusFreelance?</h2>
-                <ul class="feature-list">
-                    <li class="feature-item">
-                        <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
-                        <div>Bank-level security with end-to-end encryption</div>
-                    </li>
-                    <li class="feature-item">
-                        <div class="feature-icon"><i class="fas fa-bolt"></i></div>
-                        <div>Real-time project tracking and updates</div>
-                    </li>
-                    <li class="feature-item">
-                        <div class="feature-icon"><i class="fas fa-headset"></i></div>
-                        <div>24/7 AI-powered support assistant</div>
-                    </li>
-                    <li class="feature-item">
-                        <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
-                        <div>Advanced analytics and insights</div>
-                    </li>
-                </ul>
+            <div class="hero-image">
+                <div class="glass-card">
+                    <h2 class="card-title">Why Choose NexusFreelance?</h2>
+                    <ul class="feature-list">
+                        <li class="feature-item">
+                            <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                            <div>Bank-level security with end-to-end encryption</div>
+                        </li>
+                        <li class="feature-item">
+                            <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+                            <div>Real-time project tracking and updates</div>
+                        </li>
+                        <li class="feature-item">
+                            <div class="feature-icon"><i class="fas fa-headset"></i></div>
+                            <div>24/7 AI-powered support assistant</div>
+                        </li>
+                        <li class="feature-item">
+                            <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+                            <div>Advanced analytics and insights</div>
+                        </li>
+                    </ul>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Dashboard Preview -->
-    <section class="dashboard-preview">
-        <h2 class="section-title">Your <span>Dashboard</span> Experience</h2>
-        <div class="dashboard-container">
-            <div class="sidebar">
-                <div class="sidebar-item active">
-                    <i class="fas fa-home"></i> Dashboard
-                </div>
-                <div class="sidebar-item">
-                    <i class="fas fa-briefcase"></i> Projects
-                </div>
-                <div class="sidebar-item">
-                    <i class="fas fa-comments"></i> Messages
-                </div>
-                <div class="sidebar-item">
-                    <i class="fas fa-chart-bar"></i> Analytics
-                </div>
-                <div class="sidebar-item">
-                    <i class="fas fa-file-invoice-dollar"></i> Payments
-                </div>
-                <div class="sidebar-item">
-                    <i class="fas fa-cog"></i> Settings
-                </div>
-                <div class="sidebar-item">
-                    <i class="fas fa-question-circle"></i> Support
-                </div>
-            </div>
-            <div class="main-content">
-                <div class="dashboard-header">
-                    <h2 class="greeting">Good morning, Badhon!</h2>
-                    <div class="user-info">
-                        <div class="avatar">B</div>
-                        <div>Client</div>
+        <!-- Dashboard Section -->
+        <section class="dashboard-section">
+            <h2 class="section-title">Your <span>Dashboard</span> Experience</h2>
+            <div class="dashboard-container">
+                <div class="sidebar">
+                    <div class="sidebar-item active" data-tab="dashboard">
+                        <i class="fas fa-home"></i> Dashboard
+                    </div>
+                    <div class="sidebar-item" data-tab="projects">
+                        <i class="fas fa-briefcase"></i> Projects
+                    </div>
+                    <div class="sidebar-item" data-tab="messages">
+                        <i class="fas fa-comments"></i> Messages
+                    </div>
+                    <div class="sidebar-item" data-tab="analytics">
+                        <i class="fas fa-chart-bar"></i> Analytics
+                    </div>
+                    <div class="sidebar-item" data-tab="payments">
+                        <i class="fas fa-file-invoice-dollar"></i> Payments
+                    </div>
+                    <div class="sidebar-item" data-tab="settings">
+                        <i class="fas fa-cog"></i> Settings
                     </div>
                 </div>
-                
-                <div class="stats-container">
-                    <div class="stat-card">
-                        <div class="stat-title">Active Projects</div>
-                        <div class="stat-value">12</div>
-                        <div class="stat-change positive"><i class="fas fa-arrow-up"></i> 3 this week</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-title">Total Spent</div>
-                        <div class="stat-value">$4,280</div>
-                        <div class="stat-change negative"><i class="fas fa-arrow-down"></i> 5% from last month</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-title">Completed</div>
-                        <div class="stat-value">8</div>
-                        <div class="stat-change positive"><i class="fas fa-arrow-up"></i> 2 this week</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-title">Feedback</div>
-                        <div class="stat-value">4.8/5</div>
-                        <div class="stat-change positive"><i class="fas fa-star"></i> Excellent</div>
-                    </div>
-                </div>
-                
-                <div class="projects-section">
-                    <div class="section-header">
-                        <h3>Active Projects</h3>
-                        <button class="btn btn-outline">View All</button>
-                    </div>
-                    <div class="projects-grid">
-                        <div class="project-card">
-                            <div class="project-header">
-                                <div class="project-title">E-commerce Website</div>
-                                <div class="status status-progress">In Progress</div>
-                            </div>
-                            <div class="project-info">
-                                <p>Building a responsive e-commerce platform with React and Node.js</p>
-                            </div>
-                            <div class="progress-container">
-                                <div class="progress-bar">
-                                    <div class="progress" style="width: 65%"></div>
-                                </div>
-                                <div>65% Complete</div>
-                            </div>
-                            <div class="project-footer">
-                                <div class="deadline">Due: Nov 25, 2025</div>
-                                <button class="btn btn-outline">Message</button>
+                <div class="main-content">
+                    <!-- Dashboard Tab -->
+                    <div id="dashboard" class="tab-content active">
+                        <div class="dashboard-header">
+                            <h2 class="greeting">Good morning, Badhon!</h2>
+                            <div class="user-info">
+                                <div class="avatar">B</div>
+                                <div>Client</div>
                             </div>
                         </div>
                         
-                        <div class="project-card">
-                            <div class="project-header">
-                                <div class="project-title">Mobile App UI</div>
-                                <div class="status status-pending">Pending</div>
+                        <div class="stats-container">
+                            <div class="stat-card">
+                                <div class="stat-title">Active Projects</div>
+                                <div class="stat-value">12</div>
+                                <div class="stat-change positive"><i class="fas fa-arrow-up"></i> 3 this week</div>
                             </div>
-                            <div class="project-info">
-                                <p>Designing modern UI for fitness tracking application</p>
+                            <div class="stat-card">
+                                <div class="stat-title">Total Spent</div>
+                                <div class="stat-value">$4,280</div>
+                                <div class="stat-change negative"><i class="fas fa-arrow-down"></i> 5% from last month</div>
                             </div>
-                            <div class="progress-container">
-                                <div class="progress-bar">
-                                    <div class="progress" style="width: 15%"></div>
-                                </div>
-                                <div>15% Complete</div>
+                            <div class="stat-card">
+                                <div class="stat-title">Completed</div>
+                                <div class="stat-value">8</div>
+                                <div class="stat-change positive"><i class="fas fa-arrow-up"></i> 2 this week</div>
                             </div>
-                            <div class="project-footer">
-                                <div class="deadline">Due: Dec 10, 2025</div>
-                                <button class="btn btn-outline">Message</button>
+                            <div class="stat-card">
+                                <div class="stat-title">Feedback</div>
+                                <div class="stat-value">4.8/5</div>
+                                <div class="stat-change positive"><i class="fas fa-star"></i> Excellent</div>
                             </div>
                         </div>
                         
-                        <div class="project-card">
-                            <div class="project-header">
-                                <div class="project-title">Logo Design</div>
-                                <div class="status status-completed">Completed</div>
+                        <div class="projects-section">
+                            <div class="section-header">
+                                <h3>Active Projects</h3>
+                                <button class="btn btn-outline">View All</button>
                             </div>
-                            <div class="project-info">
-                                <p>Creating a modern logo for tech startup</p>
-                            </div>
-                            <div class="progress-container">
-                                <div class="progress-bar">
-                                    <div class="progress" style="width: 100%"></div>
+                            <div class="projects-grid">
+                                <div class="project-card">
+                                    <div class="project-header">
+                                        <div class="project-title">E-commerce Website</div>
+                                        <div class="status status-progress">In Progress</div>
+                                    </div>
+                                    <div class="project-info">
+                                        <p>Building a responsive e-commerce platform with React and Node.js</p>
+                                    </div>
+                                    <div class="progress-container">
+                                        <div class="progress-bar">
+                                            <div class="progress" style="width: 65%"></div>
+                                        </div>
+                                        <div>65% Complete</div>
+                                    </div>
+                                    <div class="project-footer">
+                                        <div class="deadline">Due: Nov 25, 2025</div>
+                                        <button class="btn btn-outline">Message</button>
+                                    </div>
                                 </div>
-                                <div>100% Complete</div>
+                                
+                                <div class="project-card">
+                                    <div class="project-header">
+                                        <div class="project-title">Mobile App UI</div>
+                                        <div class="status status-pending">Pending</div>
+                                    </div>
+                                    <div class="project-info">
+                                        <p>Designing modern UI for fitness tracking application</p>
+                                    </div>
+                                    <div class="progress-container">
+                                        <div class="progress-bar">
+                                            <div class="progress" style="width: 15%"></div>
+                                        </div>
+                                        <div>15% Complete</div>
+                                    </div>
+                                    <div class="project-footer">
+                                        <div class="deadline">Due: Dec 10, 2025</div>
+                                        <button class="btn btn-outline">Message</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="project-card">
+                                    <div class="project-header">
+                                        <div class="project-title">Logo Design</div>
+                                        <div class="status status-completed">Completed</div>
+                                    </div>
+                                    <div class="project-info">
+                                        <p>Creating a modern logo for tech startup</p>
+                                    </div>
+                                    <div class="progress-container">
+                                        <div class="progress-bar">
+                                            <div class="progress" style="width: 100%"></div>
+                                        </div>
+                                        <div>100% Complete</div>
+                                    </div>
+                                    <div class="project-footer">
+                                        <div class="deadline">Completed: Nov 5, 2025</div>
+                                        <button class="btn btn-outline">View</button>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="project-footer">
-                                <div class="deadline">Completed: Nov 5, 2025</div>
-                                <button class="btn btn-outline">View</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Messages Tab -->
+                    <div id="messages" class="tab-content">
+                        <div class="chat-container">
+                            <div class="chat-header">
+                                <div class="chat-user">
+                                    <div class="chat-avatar">D</div>
+                                    <div class="chat-name">David Chen <span class="online-status"></span></div>
+                                </div>
+                            </div>
+                            <div class="chat-messages">
+                                <div class="message received">
+                                    Hi Badhon! I've started working on the e-commerce site. I've completed the homepage design and will send you the first mockup by tomorrow.
+                                    <div class="message-time">10:24 AM</div>
+                                </div>
+                                <div class="message sent">
+                                    Great! I'm excited to see the mockup. Let me know if you need any additional requirements.
+                                    <div class="message-time">10:26 AM</div>
+                                </div>
+                                <div class="message received">
+                                    I've also implemented the shopping cart functionality. I'm using React Context for state management. Should I continue with this approach?
+                                    <div class="message-time">10:30 AM</div>
+                                </div>
+                                <div class="message sent">
+                                    Yes, that's perfect. React Context is ideal for this. Can you also share the code structure you're planning?
+                                    <div class="message-time">10:32 AM</div>
+                                </div>
+                                <div class="message received">
+                                    <i class="fas fa-file-pdf"></i> project_structure.pdf
+                                    <div class="message-time">10:35 AM</div>
+                                </div>
+                            </div>
+                            <div class="chat-input">
+                                <input type="text" class="message-input" placeholder="Type your message...">
+                                <button id="sendBtn" class="send-btn"><i class="fas fa-paper-plane"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Projects Tab -->
+                    <div id="projects" class="tab-content">
+                        <div class="section-header">
+                            <h3>Your Projects</h3>
+                            <button id="createProjectBtn" class="btn btn-primary">Create Project</button>
+                        </div>
+                        <div class="projects-grid">
+                            <div class="project-card">
+                                <div class="project-header">
+                                    <div class="project-title">E-commerce Website</div>
+                                    <div class="status status-progress">In Progress</div>
+                                </div>
+                                <div class="project-info">
+                                    <p>Building a responsive e-commerce platform with React and Node.js</p>
+                                </div>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress" style="width: 65%"></div>
+                                    </div>
+                                    <div>65% Complete</div>
+                                </div>
+                                <div class="project-footer">
+                                    <div class="deadline">Due: Nov 25, 2025</div>
+                                    <button class="btn btn-outline">Manage</button>
+                                </div>
+                            </div>
+                            
+                            <div class="project-card">
+                                <div class="project-header">
+                                    <div class="project-title">Mobile App UI</div>
+                                    <div class="status status-pending">Pending</div>
+                                </div>
+                                <div class="project-info">
+                                    <p>Designing modern UI for fitness tracking application</p>
+                                </div>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress" style="width: 15%"></div>
+                                    </div>
+                                    <div>15% Complete</div>
+                                </div>
+                                <div class="project-footer">
+                                    <div class="deadline">Due: Dec 10, 2025</div>
+                                    <button class="btn btn-outline">Manage</button>
+                                </div>
+                            </div>
+                            
+                            <div class="project-card">
+                                <div class="project-header">
+                                    <div class="project-title">Logo Design</div>
+                                    <div class="status status-completed">Completed</div>
+                                </div>
+                                <div class="project-info">
+                                    <p>Creating a modern logo for tech startup</p>
+                                </div>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress" style="width: 100%"></div>
+                                    </div>
+                                    <div>100% Complete</div>
+                                </div>
+                                <div class="project-footer">
+                                    <div class="deadline">Completed: Nov 5, 2025</div>
+                                    <button class="btn btn-outline">View</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Chat Preview -->
-    <section class="dashboard-preview" style="margin-top: 3rem;">
-        <h2 class="section-title">Real-Time <span>Chat</span> Experience</h2>
-        <div class="chat-container">
-            <div class="chat-header">
-                <div class="chat-user">
-                    <div class="chat-avatar">D</div>
-                    <div class="chat-name">David Chen <span class="online-status"></span></div>
+        <!-- Features Section -->
+        <section class="features">
+            <h2 class="section-title">Platform <span>Features</span></h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon-lg">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Advanced Security</h3>
+                    <p>End-to-end encryption, secure file transfers, and multi-factor authentication protect your data and communications.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-lg">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>AI Matching</h3>
+                    <p>Our intelligent algorithm matches you with the perfect freelancer based on skills, experience, and project requirements.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-lg">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Real-Time Analytics</h3>
+                    <p>Track project progress, budget spending, and performance metrics in real-time with interactive dashboards.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-lg">
+                        <i class="fas fa-file-contract"></i>
+                    </div>
+                    <h3>Smart Contracts</h3>
+                    <p>Automated payment releases based on project milestones with blockchain-secured smart contracts.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-lg">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3>Collaboration Tools</h3>
+                    <p>Integrated video calls, screen sharing, file sharing, and version control for seamless collaboration.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-lg">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3>Mobile Optimized</h3>
+                    <p>Full platform functionality available on mobile devices with responsive design and native app experience.</p>
                 </div>
             </div>
-            <div class="chat-messages">
-                <div class="message received">
-                    Hi Badhon! I've started working on the e-commerce site. I've completed the homepage design and will send you the first mockup by tomorrow.
-                    <div class="message-time">10:24 AM</div>
-                </div>
-                <div class="message sent">
-                    Great! I'm excited to see the mockup. Let me know if you need any additional requirements.
-                    <div class="message-time">10:26 AM</div>
-                </div>
-                <div class="message received">
-                    I've also implemented the shopping cart functionality. I'm using React Context for state management. Should I continue with this approach?
-                    <div class="message-time">10:30 AM</div>
-                </div>
-                <div class="message sent">
-                    Yes, that's perfect. React Context is ideal for this. Can you also share the code structure you're planning?
-                    <div class="message-time">10:32 AM</div>
-                </div>
-                <div class="message received">
-                    <i class="fas fa-file-pdf"></i> project_structure.pdf
-                    <div class="message-time">10:35 AM</div>
-                </div>
-            </div>
-            <div class="chat-input">
-                <input type="text" class="message-input" placeholder="Type your message...">
-                <button class="send-btn"><i class="fas fa-paper-plane"></i></button>
-            </div>
-        </div>
-    </section>
+        </section>
+    </main>
 
-    <!-- Features Section -->
-    <section class="features">
-        <h2 class="section-title">Platform <span>Features</span></h2>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon-lg">
-                    <i class="fas fa-shield-alt"></i>
+    <!-- Modals -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Sign In to Your Account</h2>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" required>
                 </div>
-                <h3>Advanced Security</h3>
-                <p>End-to-end encryption, secure file transfers, and multi-factor authentication protect your data and communications.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon-lg">
-                    <i class="fas fa-robot"></i>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
                 </div>
-                <h3>AI Matching</h3>
-                <p>Our intelligent algorithm matches you with the perfect freelancer based on skills, experience, and project requirements.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon-lg">
-                    <i class="fas fa-chart-line"></i>
+                <button type="submit" class="btn btn-primary">Sign In</button>
+                <div class="form-footer">
+                    <a href="#">Forgot Password?</a>
+                    <p>Don't have an account? <a href="#" id="showSignup">Sign Up</a></p>
                 </div>
-                <h3>Real-Time Analytics</h3>
-                <p>Track project progress, budget spending, and performance metrics in real-time with interactive dashboards.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon-lg">
-                    <i class="fas fa-file-contract"></i>
-                </div>
-                <h3>Smart Contracts</h3>
-                <p>Automated payment releases based on project milestones with blockchain-secured smart contracts.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon-lg">
-                    <i class="fas fa-comments"></i>
-                </div>
-                <h3>Collaboration Tools</h3>
-                <p>Integrated video calls, screen sharing, file sharing, and version control for seamless collaboration.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon-lg">
-                    <i class="fas fa-mobile-alt"></i>
-                </div>
-                <h3>Mobile Optimized</h3>
-                <p>Full platform functionality available on mobile devices with responsive design and native app experience.</p>
-            </div>
+            </form>
         </div>
-    </section>
+    </div>
+
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Create Your Account</h2>
+            <form id="signupForm">
+                <div class="input-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="input-group">
+                    <label for="signupEmail">Email Address</label>
+                    <input type="email" id="signupEmail" required>
+                </div>
+                <div class="input-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" required>
+                </div>
+                <div class="input-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Account</button>
+                <div class="form-footer">
+                    <p>Already have an account? <a href="#" id="showLogin">Sign In</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="createProjectModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Create New Project</h2>
+            <form id="createProjectForm">
+                <div class="input-group">
+                    <label for="projectTitle">Project Title</label>
+                    <input type="text" id="projectTitle" required>
+                </div>
+                <div class="input-group">
+                    <label for="projectDescription">Description</label>
+                    <textarea id="projectDescription" rows="4" required></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="budget">Budget ($)</label>
+                        <input type="number" id="budget" min="10" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="deadline">Deadline</label>
+                        <input type="date" id="deadline" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="category">Category</label>
+                    <select id="category" required>
+                        <option value="">Select a category</option>
+                        <option value="web">Web Development</option>
+                        <option value="design">Design</option>
+                        <option value="mobile">Mobile App</option>
+                        <option value="writing">Writing</option>
+                        <option value="marketing">Marketing</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="files">Upload Files (Max 5)</label>
+                    <input type="file" id="files" multiple accept=".pdf,.doc,.docx,.zip,.jpg,.png">
+                    <div class="file-list" id="fileList"></div>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Project</button>
+            </form>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer>
@@ -1234,86 +492,7 @@
         </div>
     </footer>
 
-    <script>
-        // Custom cursor functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const cursor = document.querySelector('.cursor');
-            const follower = document.querySelector('.cursor-follower');
-            
-            let timeout;
-            
-            // Follow cursor with position
-            document.addEventListener('mousemove', (e) => {
-                const x = e.clientX;
-                const y = e.clientY;
-                
-                cursor.style.left = `${x}px`;
-                cursor.style.top = `${y}px`;
-                
-                // Delay the follower for a smooth effect
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                    follower.style.left = `${x}px`;
-                    follower.style.top = `${y}px`;
-                }, 50);
-            });
-            
-            // Enlarge cursor on hoverable elements
-            const hoverable = document.querySelectorAll('a, button, .feature-card, .project-card, .sidebar-item');
-            
-            hoverable.forEach(item => {
-                item.addEventListener('mouseenter', () => {
-                    cursor.style.transform = 'translate(-50%, -50%) scale(2)';
-                    follower.style.transform = 'translate(-50%, -50%) scale(1.5)';
-                });
-                
-                item.addEventListener('mouseleave', () => {
-                    cursor.style.transform = 'translate(-50%, -50%) scale(1)';
-                    follower.style.transform = 'translate(-50%, -50%) scale(1)';
-                });
-            });
-            
-            // Active state for buttons
-            const buttons = document.querySelectorAll('button');
-            buttons.forEach(button => {
-                button.addEventListener('mousedown', () => {
-                    cursor.style.transform = 'translate(-50%, -50%) scale(0.8)';
-                });
-                
-                button.addEventListener('mouseup', () => {
-                    cursor.style.transform = 'translate(-50%, -50%) scale(2)';
-                    setTimeout(() => {
-                        cursor.style.transform = 'translate(-50%, -50%) scale(1)';
-                    }, 100);
-                });
-            });
-            
-            // Add floating animation to cards
-            const cards = document.querySelectorAll('.feature-card, .project-card');
-            cards.forEach(card => {
-                card.addEventListener('mouseenter', () => {
-                    card.style.transform = 'translateY(-10px)';
-                });
-                
-                card.addEventListener('mouseleave', () => {
-                    card.style.transform = 'translateY(0)';
-                });
-            });
-            
-            // Simulate real-time updates
-            setInterval(() => {
-                const status = document.querySelector('.status.status-progress');
-                if (status) {
-                    const progress = status.closest('.project-card').querySelector('.progress');
-                    let width = parseInt(progress.style.width);
-                    if (width < 90) {
-                        width += Math.floor(Math.random() * 3);
-                        progress.style.width = width + '%';
-                        status.closest('.project-card').querySelector('.stat-value').textContent = width + '%';
-                    }
-                }
-            }, 5000);
-        });
-    </script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="script.js"></script>
 </body>
 </html>
