@@ -20,6 +20,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabContents = document.querySelectorAll('.tab-content');
     const filesInput = document.getElementById('files');
     const fileList = document.getElementById('fileList');
+    const findTalentBtn = document.getElementById('findTalentBtn');
+    const joinAsFreelancerBtn = document.getElementById('joinAsFreelancerBtn');
+    const viewAllProjectsBtn = document.getElementById('viewAllProjectsBtn');
+    const messageBtns = document.querySelectorAll('.message-btn');
+    const manageBtns = document.querySelectorAll('.manage-btn');
 
     // Open Modals
     loginBtn.addEventListener('click', () => {
@@ -215,19 +220,74 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Project Card Interactions
-    const projectCards = document.querySelectorAll('.project-card');
-    projectCards.forEach(card => {
-        const messageBtn = card.querySelector('.btn-outline');
-        if (messageBtn) {
-            messageBtn.addEventListener('click', () => {
-                // Switch to messages tab
-                sidebarItems.forEach(i => i.classList.remove('active'));
-                document.querySelector('[data-tab="messages"]').classList.add('active');
-                
-                // Show messages tab content
-                tabContents.forEach(content => content.classList.remove('active'));
-                document.getElementById('messages').classList.add('active');
-            });
-        }
+    messageBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const freelancer = btn.getAttribute('data-freelancer');
+            
+            // Switch to messages tab
+            sidebarItems.forEach(i => i.classList.remove('active'));
+            document.querySelector('[data-tab="messages"]').classList.add('active');
+            
+            // Show messages tab content
+            tabContents.forEach(content => content.classList.remove('active'));
+            document.getElementById('messages').classList.add('active');
+            
+            // Update chat header with freelancer name
+            document.querySelector('.chat-name').textContent = `${freelancer} `;
+            
+            // Add online status indicator
+            document.querySelector('.online-status').style.display = 'inline-block';
+        });
+    });
+
+    manageBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const projectCard = btn.closest('.project-card');
+            const projectName = projectCard.querySelector('.project-title').textContent;
+            alert(`Managing project: ${projectName}`);
+        });
+    });
+
+    // Other button interactions
+    findTalentBtn.addEventListener('click', () => {
+        alert('Redirecting to find talent page...');
+        // In a real app, this would navigate to the talent search page
+    });
+
+    joinAsFreelancerBtn.addEventListener('click', () => {
+        signupModal.style.display = 'block';
+    });
+
+    viewAllProjectsBtn.addEventListener('click', () => {
+        // Switch to projects tab
+        sidebarItems.forEach(i => i.classList.remove('active'));
+        document.querySelector('[data-tab="projects"]').classList.add('active');
+        
+        // Show projects tab content
+        tabContents.forEach(content => content.classList.remove('active'));
+        document.getElementById('projects').classList.add('active');
+    });
+
+    // Navigation links
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            alert(`Navigating to ${link.textContent} page...`);
+        });
+    });
+
+    // Footer links
+    document.querySelectorAll('.footer-links a').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            alert(`Navigating to ${link.textContent} page...`);
+        });
+    });
+
+    // Social icons
+    document.querySelectorAll('.social-icon').forEach(icon => {
+        icon.addEventListener('click', () => {
+            alert(`Opening ${icon.querySelector('i').className.split(' ')[1]}...`);
+        });
     });
 });
