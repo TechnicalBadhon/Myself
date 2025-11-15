@@ -1,12 +1,18 @@
-// Import Firebase services from the config file
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithPopup, GoogleAuthProvider, signInWithPhoneNumber, signOut } from "firebase/auth";
-import { getFirestore, collection, addDoc, updateDoc, doc, getDoc, getDocs, query, where, orderBy, limit, onSnapshot, serverTimestamp } from "firebase/firestore";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-
-// Get the initialized services from the global window object (or import them differently if preferred)
-const auth = getAuth(window.firebaseApp);
-const db = getFirestore(window.firebaseApp);
-const storage = getStorage(window.firebaseApp);
+// Firebase Configuration - Use your actual project details
+const firebaseConfig = {
+  apiKey: "AIzaSyAgVMWh_xuP9CRptIbaS_nJ7e0j2Dp5sRY",
+  authDomain: "myself-4e877.firebaseapp.com",
+  projectId: "myself-4e877",
+  storageBucket: "myself-4e877.appspot.com",   // ✅ fixed: must end with .appspot.com
+  messagingSenderId: "603026482562",
+  appId: "1:603026482562:web:9e790b4884674549ea5b9b",
+  measurementId: "G-4MS84VJ031"
+};
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
 
 // Global variables
 let currentUser = null;
@@ -54,10 +60,10 @@ function initializeApp() {
     }, 2000);
 
     // Check if user is already logged in
-    onAuthStateChanged(auth, async (user) => {
+    auth.onAuthStateChanged(user => {
         if (user) {
             currentUser = user;
-            await loadUserData(user.uid);
+            loadUserData(user.uid);
             showDashboard();
         } else {
             showAuth();
@@ -120,7 +126,7 @@ async function handleLogin() {
     }
 
     try {
-        const result = await signInWithEmailAndPassword(auth, email, password);
+        const result = await auth.signInWithEmailAndPassword(email, password);
         currentUser = result.user;
         await loadUserData(currentUser.uid);
         showDashboard();
@@ -153,16 +159,16 @@ async function handleSignup() {
     }
 
     try {
-        const result = await createUserWithEmailAndPassword(auth, email, password);
+        const result = await auth.createUserWithEmailAndPassword(email, password);
         currentUser = result.user;
         
         // Save user data to Firestore
-        await addDoc(collection(db, 'users'), {
+        await db.collection('users').doc(currentUser.uid).set({
             name: name,
             email: email,
             userType: userType,
-            createdAt: serverTimestamp(),
-            lastLogin: serverTimestamp(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
             avatar: 'https://via.placeholder.com/150',
             bio: '',
             phone: '',
@@ -185,7 +191,7 @@ async function handlePasswordReset() {
     }
 
     try {
-        await sendPasswordResetEmail(auth, email);
+        await auth.sendPasswordResetEmail(email);
         showToast('Password reset email sent!', 'success');
     } catch (error) {
         showToast(error.message, 'error');
@@ -193,34 +199,24 @@ async function handlePasswordReset() {
 }
 
 async function handleGoogleLogin() {
-    const provider = new GoogleAuthProvider();
+    const provider = new firebase.auth.GoogleAuthProvider();
     try {
-        const result = await signInWithPopup(auth, provider);
+        const result = await auth.signInWithPopup(provider);
         currentUser = result.user;
         
         // Check if user exists in our database
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('email', '==', currentUser.email));
-        const querySnapshot = await getDocs(q);
-        
-        if (querySnapshot.empty) {
+        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+        if (!userDoc.exists) {
             // Create user profile
-            await addDoc(collection(db, 'users'), {
+            await db.collection('users').doc(currentUser.uid).set({
                 name: currentUser.displayName,
                 email: currentUser.email,
                 userType: 'client', // Default to client
-                createdAt: serverTimestamp(),
-                lastLogin: serverTimestamp(),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
                 avatar: currentUser.photoURL || 'https://via.placeholder.com/150',
                 bio: '',
                 phone: '',
-                online: true
-            });
-        } else {
-            // User already exists, just get their ID
-            const userDoc = querySnapshot.docs[0];
-            await updateDoc(doc(db, 'users', userDoc.id), {
-                lastLogin: serverTimestamp(),
                 online: true
             });
         }
@@ -239,37 +235,33 @@ async function handlePhoneLogin() {
     if (!phoneNumber) return;
 
     try {
-        // Note: For phone auth to work properly, you need to set up reCAPTCHA
-        // This is a simplified version and might not work without proper reCAPTCHA setup
-        // For a full implementation, you'd need to use the Firebase UI library or implement reCAPTCHA manually
-        showToast('Phone authentication requires reCAPTCHA setup. Please implement it.', 'warning');
-        // const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
-        // const code = prompt('Enter the verification code sent to your phone:');
+        const confirmationResult = await auth.signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier);
+        const code = prompt('Enter the verification code sent to your phone:');
         
-        // if (code) {
-        //     const result = await confirmationResult.confirm(code);
-        //     currentUser = result.user;
+        if (code) {
+            const result = await confirmationResult.confirm(code);
+            currentUser = result.user;
             
-        //     // Check if user exists in our database
-        //     const userDoc = await db.collection('users').doc(currentUser.uid).get();
-        //     if (!userDoc.exists) {
-        //         await db.collection('users').doc(currentUser.uid).set({
-        //             name: 'Phone User',
-        //             email: null,
-        //             userType: 'client',
-        //             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        //             lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-        //             avatar: 'https://via.placeholder.com/150',
-        //             bio: '',
-        //             phone: phoneNumber,
-        //             online: true
-        //         });
-        //     }
+            // Check if user exists in our database
+            const userDoc = await db.collection('users').doc(currentUser.uid).get();
+            if (!userDoc.exists) {
+                await db.collection('users').doc(currentUser.uid).set({
+                    name: 'Phone User',
+                    email: null,
+                    userType: 'client',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                    avatar: 'https://via.placeholder.com/150',
+                    bio: '',
+                    phone: phoneNumber,
+                    online: true
+                });
+            }
             
-        //     await loadUserData(currentUser.uid);
-        //     showDashboard();
-        //     showToast('Phone login successful!', 'success');
-        // }
+            await loadUserData(currentUser.uid);
+            showDashboard();
+            showToast('Phone login successful!', 'success');
+        }
     } catch (error) {
         showToast(error.message, 'error');
     }
@@ -278,12 +270,8 @@ async function handlePhoneLogin() {
 // Dashboard Functions
 async function loadUserData(userId) {
     try {
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('__name__', '==', userId)); // Query by document ID
-        const querySnapshot = await getDocs(q);
-        
-        if (!querySnapshot.empty) {
-            const userDoc = querySnapshot.docs[0];
+        const userDoc = await db.collection('users').doc(userId).get();
+        if (userDoc.exists) {
             const userData = userDoc.data();
             
             // Update UI with user data
@@ -333,12 +321,12 @@ async function loadDashboardStats() {
         
         if (isClient) {
             // Client: count their projects
-            const projectsRef = collection(db, 'projects');
-            const q = query(projectsRef, where('clientId', '==', userId));
-            const querySnapshot = await getDocs(q);
-            totalProjects = querySnapshot.size;
+            const projectsSnapshot = await db.collection('projects')
+                .where('clientId', '==', userId)
+                .get();
+            totalProjects = projectsSnapshot.size;
             
-            querySnapshot.forEach(doc => {
+            projectsSnapshot.forEach(doc => {
                 const data = doc.data();
                 if (data.status !== 'completed' && data.status !== 'canceled') {
                     activeProjects++;
@@ -349,12 +337,12 @@ async function loadDashboardStats() {
             });
         } else {
             // Freelancer: count assigned projects
-            const projectsRef = collection(db, 'projects');
-            const q = query(projectsRef, where('freelancerId', '==', userId));
-            const querySnapshot = await getDocs(q);
-            totalProjects = querySnapshot.size;
+            const projectsSnapshot = await db.collection('projects')
+                .where('freelancerId', '==', userId)
+                .get();
+            totalProjects = projectsSnapshot.size;
             
-            querySnapshot.forEach(doc => {
+            projectsSnapshot.forEach(doc => {
                 const data = doc.data();
                 if (data.status !== 'completed' && data.status !== 'canceled') {
                     activeProjects++;
@@ -380,26 +368,17 @@ async function loadRecentActivity() {
         activityList.innerHTML = '';
         
         // Get recent projects and messages
-        const userId = currentUser.uid;
-        const projectsRef = collection(db, 'projects');
-        const projectQuery = isClient 
-            ? query(projectsRef, where('clientId', '==', userId), orderBy('createdAt', 'desc'), limit(5))
-            : query(projectsRef, where('freelancerId', '==', userId), orderBy('createdAt', 'desc'), limit(5));
+        const projectsSnapshot = await db.collection('projects')
+            .where(isClient ? 'clientId' : 'freelancerId', '==', currentUser.uid)
+            .orderBy('createdAt', 'desc')
+            .limit(5)
+            .get();
         
-        const projectsSnapshot = await getDocs(projectQuery);
-        
-        // For messages, we need to get project IDs first
-        const projectIds = [];
-        projectsSnapshot.forEach(doc => {
-            projectIds.push(doc.id);
-        });
-
-        let messagesSnapshot = { docs: [] }; // Initialize as empty
-        if (projectIds.length > 0) {
-            const messagesRef = collection(db, 'messages');
-            const messageQuery = query(messagesRef, where('projectId', 'in', projectIds), orderBy('timestamp', 'desc'), limit(5));
-            messagesSnapshot = await getDocs(messageQuery);
-        }
+        const messagesSnapshot = await db.collection('messages')
+            .where('projectId', 'in', await getCurrentUserProjectIds())
+            .orderBy('timestamp', 'desc')
+            .limit(5)
+            .get();
         
         const activities = [];
         
@@ -426,7 +405,7 @@ async function loadRecentActivity() {
         });
         
         // Sort by timestamp
-        activities.sort((a, b) => b.timestamp.toDate - a.timestamp.toDate);
+        activities.sort((a, b) => b.timestamp.toDate() - a.timestamp.toDate());
         
         // Display top 5 activities
         activities.slice(0, 5).forEach(activity => {
@@ -445,15 +424,26 @@ async function loadRecentActivity() {
     }
 }
 
+async function getCurrentUserProjectIds() {
+    const projectIds = [];
+    const projectsSnapshot = await db.collection('projects')
+        .where(isClient ? 'clientId' : 'freelancerId', '==', currentUser.uid)
+        .get();
+    
+    projectsSnapshot.forEach(doc => {
+        projectIds.push(doc.id);
+    });
+    
+    return projectIds;
+}
+
 function setupRealTimeListeners() {
     // Listen for project updates
-    const userId = currentUser.uid;
-    const projectsRef = collection(db, 'projects');
     const projectQuery = isClient 
-        ? query(projectsRef, where('clientId', '==', userId))
-        : query(projectsRef, where('freelancerId', '==', userId));
+        ? db.collection('projects').where('clientId', '==', currentUser.uid)
+        : db.collection('projects').where('freelancerId', '==', currentUser.uid);
     
-    onSnapshot(projectQuery, () => {
+    projectQuery.onSnapshot(snapshot => {
         loadDashboardStats();
         if (currentView === 'projects') {
             if (isClient) {
@@ -464,8 +454,10 @@ function setupRealTimeListeners() {
         }
     });
     
-    // Listen for message updates (this would need to be updated based on selected conversation)
-    // For now, we'll focus on the main project updates
+    // Listen for message updates
+    db.collection('messages').where('projectId', 'in', []).onSnapshot(() => {
+        // This will be updated with actual project IDs when needed
+    });
 }
 
 // Project Management Functions
@@ -474,12 +466,12 @@ async function loadProjects() {
         const projectsList = document.getElementById('projectsList');
         projectsList.innerHTML = '';
         
-        const userId = currentUser.uid;
-        const projectsRef = collection(db, 'projects');
-        const q = query(projectsRef, where('clientId', '==', userId), orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
+        const projectsSnapshot = await db.collection('projects')
+            .where('clientId', '==', currentUser.uid)
+            .orderBy('createdAt', 'desc')
+            .get();
         
-        querySnapshot.forEach(doc => {
+        projectsSnapshot.forEach(doc => {
             const project = doc.data();
             const projectElement = createProjectCard(doc.id, project);
             projectsList.appendChild(projectElement);
@@ -496,12 +488,12 @@ async function loadClientProjects() {
         const projectsList = document.getElementById('projectsList');
         projectsList.innerHTML = '';
         
-        const userId = currentUser.uid;
-        const projectsRef = collection(db, 'projects');
-        const q = query(projectsRef, where('freelancerId', '==', userId), orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
+        const projectsSnapshot = await db.collection('projects')
+            .where('freelancerId', '==', currentUser.uid)
+            .orderBy('createdAt', 'desc')
+            .get();
         
-        querySnapshot.forEach(doc => {
+        projectsSnapshot.forEach(doc => {
             const project = doc.data();
             const projectElement = createProjectCard(doc.id, project);
             projectsList.appendChild(projectElement);
@@ -518,7 +510,7 @@ function createProjectCard(projectId, project) {
     card.className = 'project-card';
     
     const statusClass = `status-${project.status}`;
-    const statusText = project.status ? project.status.charAt(0).toUpperCase() + project.status.slice(1) : 'Unknown';
+    const statusText = project.status.charAt(0).toUpperCase() + project.status.slice(1);
     
     card.innerHTML = `
         <div class="project-header">
@@ -579,11 +571,11 @@ async function createProject() {
             deadline: deadline,
             status: 'pending',
             clientId: currentUser.uid,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         
-        const projectRef = await addDoc(collection(db, 'projects'), projectData);
+        const projectRef = await db.collection('projects').add(projectData);
         
         // Handle file uploads if any
         const fileInput = document.getElementById('projectFiles');
@@ -608,9 +600,9 @@ async function createProject() {
 
 async function updateProjectStatus(projectId, newStatus) {
     try {
-        await updateDoc(doc(db, 'projects', projectId), {
+        await db.collection('projects').doc(projectId).update({
             status: newStatus,
-            updatedAt: serverTimestamp()
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         showToast('Project status updated!', 'success');
     } catch (error) {
@@ -620,28 +612,22 @@ async function updateProjectStatus(projectId, newStatus) {
 }
 
 async function uploadProjectFile(projectId, file) {
-    const fileRef = storageRef(storage, `projects/${projectId}/${file.name}`);
+    const storageRef = storage.ref();
+    const fileRef = storageRef.child(`projects/${projectId}/${file.name}`);
     
     try {
-        const snapshot = await uploadBytes(fileRef, file);
-        const downloadURL = await getDownloadURL(snapshot.ref);
+        const snapshot = await fileRef.put(file);
+        const downloadURL = await snapshot.ref.getDownloadURL();
         
         // Save file reference to project
-        // Note: Firestore doesn't have a direct arrayUnion equivalent in the modular SDK without a transaction
-        // For simplicity, we'll fetch the current project and update it
-        const projectDoc = await getDoc(doc(db, 'projects', projectId));
-        const projectData = projectDoc.data();
-        const currentFiles = projectData.files || [];
-        currentFiles.push({
-            name: file.name,
-            url: downloadURL,
-            type: file.type,
-            size: file.size,
-            uploadedAt: serverTimestamp()
-        });
-        
-        await updateDoc(doc(db, 'projects', projectId), {
-            files: currentFiles
+        await db.collection('projects').doc(projectId).update({
+            files: firebase.firestore.FieldValue.arrayUnion({
+                name: file.name,
+                url: downloadURL,
+                type: file.type,
+                size: file.size,
+                uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
         });
         
     } catch (error) {
@@ -660,14 +646,15 @@ async function openProjectChat(projectId) {
 async function loadConversation(projectId) {
     try {
         // Load messages for this project
-        const messagesRef = collection(db, 'messages');
-        const q = query(messagesRef, where('projectId', '==', projectId), orderBy('timestamp', 'asc'));
-        const querySnapshot = await getDocs(q);
+        const messagesSnapshot = await db.collection('messages')
+            .where('projectId', '==', projectId)
+            .orderBy('timestamp', 'asc')
+            .get();
         
         const messagesList = document.getElementById('messagesList');
         messagesList.innerHTML = '';
         
-        querySnapshot.forEach(doc => {
+        messagesSnapshot.forEach(doc => {
             const message = doc.data();
             const messageElement = createMessageElement(message, doc.id);
             messagesList.appendChild(messageElement);
@@ -677,18 +664,15 @@ async function loadConversation(projectId) {
         messagesList.scrollTop = messagesList.scrollHeight;
         
         // Load project info for chat header
-        const projectDoc = await getDoc(doc(db, 'projects', projectId));
-        if (projectDoc.exists()) {
+        const projectDoc = await db.collection('projects').doc(projectId).get();
+        if (projectDoc.exists) {
             const project = projectDoc.data();
             const otherUserId = isClient ? project.freelancerId : project.clientId;
             
             if (otherUserId) {
-                const userRef = collection(db, 'users');
-                const userQuery = query(userRef, where('__name__', '==', otherUserId)); // Query by document ID
-                const userSnapshot = await getDocs(userQuery);
-                
-                if (!userSnapshot.empty) {
-                    const userData = userSnapshot.docs[0].data();
+                const userDoc = await db.collection('users').doc(otherUserId).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
                     document.getElementById('chatUserName').textContent = userData.name;
                     document.getElementById('chatUserAvatar').src = userData.avatar;
                     document.getElementById('chatUserStatus').className = 'status-indicator';
@@ -750,11 +734,11 @@ async function sendMessage() {
             projectId: selectedConversation,
             senderId: currentUser.uid,
             text: text,
-            timestamp: serverTimestamp(),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             type: 'text'
         };
         
-        await addDoc(collection(db, 'messages'), messageData);
+        await db.collection('messages').add(messageData);
         
         // Clear input
         elements.messageInput.value = '';
@@ -774,11 +758,12 @@ async function sendMessage() {
 }
 
 async function uploadMessageFile(projectId, file) {
-    const fileRef = storageRef(storage, `messages/${projectId}/${Date.now()}_${file.name}`);
+    const storageRef = storage.ref();
+    const fileRef = storageRef.child(`messages/${projectId}/${Date.now()}_${file.name}`);
     
     try {
-        const snapshot = await uploadBytes(fileRef, file);
-        const downloadURL = await getDownloadURL(snapshot.ref);
+        const snapshot = await fileRef.put(file);
+        const downloadURL = await snapshot.ref.getDownloadURL();
         
         const messageData = {
             projectId: projectId,
@@ -787,11 +772,11 @@ async function uploadMessageFile(projectId, file) {
             fileUrl: downloadURL,
             fileType: file.type,
             fileSize: file.size,
-            timestamp: serverTimestamp(),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             type: 'file'
         };
         
-        await addDoc(collection(db, 'messages'), messageData);
+        await db.collection('messages').add(messageData);
         
     } catch (error) {
         console.error('Error uploading file:', error);
@@ -855,30 +840,20 @@ async function updateProfile() {
     const bio = document.getElementById('editBio').value;
     
     try {
-        // Find the user document by email (or you could store the doc ID in session)
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('email', '==', currentUser.email)); // Assuming email is unique and used as identifier
-        const querySnapshot = await getDocs(q);
+        await db.collection('users').doc(currentUser.uid).update({
+            name: name,
+            email: email,
+            phone: phone,
+            bio: bio,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
         
-        if (!querySnapshot.empty) {
-            const userDoc = querySnapshot.docs[0];
-            await updateDoc(doc(db, 'users', userDoc.id), {
-                name: name,
-                email: email,
-                phone: phone,
-                bio: bio,
-                updatedAt: serverTimestamp()
-            });
-            
-            showToast('Profile updated successfully!', 'success');
-            
-            // Update UI
-            document.getElementById('userName').textContent = name;
-            document.getElementById('welcomeName').textContent = name;
-            document.getElementById('profileName').textContent = name;
-        } else {
-            showToast('User profile not found', 'error');
-        }
+        showToast('Profile updated successfully!', 'success');
+        
+        // Update UI
+        document.getElementById('userName').textContent = name;
+        document.getElementById('welcomeName').textContent = name;
+        document.getElementById('profileName').textContent = name;
         
     } catch (error) {
         console.error('Error updating profile:', error);
@@ -941,16 +916,15 @@ function switchAuthTab(tab) {
     document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
 }
 
-async function handleLogout() {
-    try {
-        await signOut(auth);
+function handleLogout() {
+    auth.signOut().then(() => {
         currentUser = null;
         showAuth();
         showToast('Logged out successfully!', 'success');
-    } catch (error) {
+    }).catch(error => {
         console.error('Error logging out:', error);
         showToast('Error logging out', 'error');
-    }
+    });
 }
 
 function showToast(message, type = 'info') {
@@ -977,17 +951,17 @@ function formatDate(dateString) {
 
 function formatTime(timestamp) {
     if (!timestamp) return 'Just now';
-    // Handle both Timestamp objects (from Firestore) and plain Date objects
-    let date;
-    if (timestamp && typeof timestamp.toDate === 'function') {
-        date = timestamp.toDate();
-    } else if (timestamp instanceof Date) {
-        date = timestamp;
-    } else {
-        return 'Invalid Date';
-    }
+    const date = timestamp.toDate();
     return date.toLocaleTimeString();
 }
+
+// Initialize Recaptcha for phone auth (if needed)
+window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('phoneLogin', {
+    'size': 'invisible',
+    'callback': (response) => {
+        // reCAPTCHA solved, allow signInWithPhoneNumber.
+    }
+});
 
 // Additional utility functions for the app
 function loadConversations() {
@@ -1012,4 +986,4 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-console.log('FutureFreelance Platform initialized successfully with modular Firebase SDK!');
+console.log('FutureFreelance Platform initialized successfully!');
