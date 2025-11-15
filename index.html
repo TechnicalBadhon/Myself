@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NexusFreelance | Professional Platform</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <!-- Navigation -->
@@ -93,7 +94,7 @@
                             <h2 class="greeting">Good morning, Badhon!</h2>
                             <div class="user-info">
                                 <div class="avatar">B</div>
-                                <div>Client</div>
+                                <div class="user-name">Client</div>
                             </div>
                         </div>
                         
@@ -123,7 +124,7 @@
                         <div class="projects-section">
                             <div class="section-header">
                                 <h3>Active Projects</h3>
-                                <button class="btn btn-outline">View All</button>
+                                <button id="viewAllProjectsBtn" class="btn btn-outline">View All</button>
                             </div>
                             <div class="projects-grid">
                                 <div class="project-card">
@@ -142,7 +143,7 @@
                                     </div>
                                     <div class="project-footer">
                                         <div class="deadline">Due: Nov 25, 2025</div>
-                                        <button class="btn btn-outline">Message</button>
+                                        <button class="btn btn-outline message-btn" data-freelancer="David Chen">Message</button>
                                     </div>
                                 </div>
                                 
@@ -162,7 +163,7 @@
                                     </div>
                                     <div class="project-footer">
                                         <div class="deadline">Due: Dec 10, 2025</div>
-                                        <button class="btn btn-outline">Message</button>
+                                        <button class="btn btn-outline message-btn" data-freelancer="Sarah Kim">Message</button>
                                     </div>
                                 </div>
                                 
@@ -250,7 +251,7 @@
                                 </div>
                                 <div class="project-footer">
                                     <div class="deadline">Due: Nov 25, 2025</div>
-                                    <button class="btn btn-outline">Manage</button>
+                                    <button class="btn btn-outline manage-btn">Manage</button>
                                 </div>
                             </div>
                             
@@ -270,7 +271,7 @@
                                 </div>
                                 <div class="project-footer">
                                     <div class="deadline">Due: Dec 10, 2025</div>
-                                    <button class="btn btn-outline">Manage</button>
+                                    <button class="btn btn-outline manage-btn">Manage</button>
                                 </div>
                             </div>
                             
@@ -492,7 +493,6 @@
         </div>
     </footer>
 
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     <script src="script.js"></script>
 </body>
 </html>
