@@ -4,10 +4,519 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NexusFreelance - Professional Freelancing Platform</title>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getDatabase, ref, set, get, child, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAgVMWh_xuP9CRptIbaS_nJ7e0j2Dp5sRY",
+            authDomain: "myself-4e877.firebaseapp.com",
+            databaseURL: "https://myself-4e877-default-rtdb.firebaseio.com/",
+            projectId: "myself-4e877",
+            storageBucket: "myself-4e877.appspot.com",
+            messagingSenderId: "603026482562",
+            appId: "1:603026482562:web:9e790b488467454ea5b9b"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+        const storage = getStorage(app);
+
+        // DOM Elements
+        const loginBtn = document.getElementById('login-btn');
+        const signupBtn = document.getElementById('signup-btn');
+        const guestBtn = document.getElementById('guest-btn');
+        const getStartedBtn = document.getElementById('get-started-btn');
+        const loginModal = document.getElementById('login-modal');
+        const signupModal = document.getElementById('signup-modal');
+        const adminDashboard = document.getElementById('admin-dashboard');
+        const clientDashboard = document.getElementById('client-dashboard');
+        const freelancerDashboard = document.getElementById('freelancer-dashboard');
+        const authToggles = document.querySelectorAll('.auth-toggle');
+        const loginSubmit = document.getElementById('login-submit');
+        const signupSubmit = document.getElementById('signup-submit');
+        const clientLogout = document.getElementById('client-logout');
+        const freelancerLogout = document.getElementById('freelancer-logout');
+        const adminLogout = document.getElementById('admin-logout');
+        const navTabs = document.querySelectorAll('.nav-tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const fileUploadArea = document.getElementById('file-upload-area');
+        const fileInput = document.getElementById('file-input');
+        const filePreview = document.getElementById('file-preview');
+        const sendAnnouncementBtn = document.getElementById('send-announcement');
+        const adminSendMessageBtn = document.getElementById('admin-send-message');
+        const adminMessageInput = document.getElementById('admin-message-input');
+        const sendMessageBtn = document.getElementById('send-message');
+        const messageInput = document.getElementById('message-input');
+        const createOrderBtn = document.getElementById('create-order');
+        const orderTitle = document.getElementById('order-title');
+        const orderDescription = document.getElementById('order-description');
+        const orderBudget = document.getElementById('order-budget');
+        const orderDeadline = document.getElementById('order-deadline');
+
+        // Global Variables
+        let currentUser = null;
+        let currentRole = null;
+        let activeChat = null;
+        let chatListener = null;
+
+        // Custom Cursor Effect
+        document.addEventListener('mousemove', (e) => {
+            const cursor = document.querySelector('.cursor');
+            const follower = document.querySelector('.cursor-follower');
+            
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            
+            setTimeout(() => {
+                follower.style.left = e.clientX + 'px';
+                follower.style.top = e.clientY + 'px';
+            }, 50);
+        });
+
+        // Open Modal Functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Event Listeners
+        loginBtn.addEventListener('click', () => openModal('login-modal'));
+        signupBtn.addEventListener('click', () => openModal('signup-modal'));
+        guestBtn.addEventListener('click', () => {
+            // Simulate guest login
+            showNotification('Accessing as guest user', 'info');
+            currentRole = 'guest';
+            document.querySelector('header').innerHTML = `
+                <div class="logo">
+                    <i class="fas fa-rocket"></i>
+                    <span>NexusFreelance</span>
+                </div>
+                <div class="auth-buttons">
+                    <span style="color: #00c6ff;">Guest User</span>
+                    <button id="guest-logout" class="neon-button">Logout</button>
+                </div>
+            `;
+            document.getElementById('guest-logout').addEventListener('click', () => {
+                window.location.reload();
+            });
+        });
+
+        getStartedBtn.addEventListener('click', () => openModal('signup-modal'));
+
+        // Auth Toggles
+        authToggles.forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const target = toggle.getAttribute('data-target');
+                if (target === 'login') {
+                    closeModal('signup-modal');
+                    openModal('login-modal');
+                } else {
+                    closeModal('login-modal');
+                    openModal('signup-modal');
+                }
+            });
+        });
+
+        // Close modals when clicking outside
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        // Tab Navigation
+        navTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.getAttribute('data-tab');
+                
+                // Update active tab
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Show active content
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Determine dashboard prefix based on current role
+                let prefix = '';
+                if (currentRole === 'admin') prefix = 'admin-';
+                else if (currentRole === 'freelancer') prefix = 'f-';
+                
+                document.getElementById(`${prefix}${tabName}-content`).classList.add('active');
+            });
+        });
+
+        // File Upload Drag & Drop
+        fileUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.add('dragover');
+        });
+
+        fileUploadArea.addEventListener('dragleave', () => {
+            fileUploadArea.classList.remove('dragover');
+        });
+
+        fileUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        fileUploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            if (files.length > 5) {
+                showNotification('Maximum 5 files allowed', 'error');
+                return;
+            }
+
+            filePreview.innerHTML = '';
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                
+                // Determine file type icon
+                let icon = 'fa-file';
+                if (file.type.startsWith('image/')) icon = 'fa-file-image';
+                else if (file.type === 'application/pdf') icon = 'fa-file-pdf';
+                else if (file.type === 'application/zip') icon = 'fa-file-archive';
+                else if (file.type.includes('document')) icon = 'fa-file-word';
+                
+                fileItem.innerHTML = `
+                    <i class="fas ${icon}"></i>
+                    <span>${file.name}</span>
+                    <i class="fas fa-times" style="cursor: pointer;" onclick="this.parentElement.remove()"></i>
+                `;
+                
+                filePreview.appendChild(fileItem);
+            }
+        }
+
+        // Notification System
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            let bgColor = '#4CAF50';
+            if (type === 'error') bgColor = '#f44336';
+            else if (type === 'warning') bgColor = '#ff9800';
+            else if (type === 'info') bgColor = '#2196F3';
+            
+            notification.style.background = bgColor;
+            notification.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i> ${message}`;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Firebase Authentication
+        loginSubmit.addEventListener('click', async () => {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            try {
+                // Check if admin
+                if (email === 'badhon@gmail.com' && password === 'badhon') {
+                    currentRole = 'admin';
+                    adminDashboard.classList.add('active');
+                    closeModal('login-modal');
+                    showNotification('Admin logged in successfully', 'success');
+                    return;
+                }
+                
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                currentUser = userCredential.user;
+                
+                // Get user role from database
+                const userRef = ref(db, `users/${currentUser.uid}`);
+                const userSnapshot = await get(userRef);
+                
+                if (userSnapshot.exists()) {
+                    currentRole = userSnapshot.val().role;
+                    
+                    // Hide auth modals, show dashboard
+                    closeModal('login-modal');
+                    showDashboard();
+                    showNotification('Login successful', 'success');
+                } else {
+                    showNotification('User not found in database', 'error');
+                }
+            } catch (error) {
+                showNotification('Login failed: ' + error.message, 'error');
+            }
+        });
+
+        signupSubmit.addEventListener('click', async () => {
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const role = document.getElementById('user-role').value;
+            
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                currentUser = userCredential.user;
+                
+                // Save user data to Realtime Database
+                await set(ref(db, `users/${currentUser.uid}`), {
+                    email: email,
+                    name: name,
+                    role: role,
+                    createdAt: Date.now(),
+                    profilePhoto: '',
+                    bio: '',
+                    country: '',
+                    phone: ''
+                });
+                
+                currentRole = role;
+                
+                showNotification('Account created successfully!', 'success');
+                closeModal('signup-modal');
+                showDashboard();
+            } catch (error) {
+                showNotification('Signup failed: ' + error.message, 'error');
+            }
+        });
+
+        // Show Dashboard based on user role
+        function showDashboard() {
+            if (currentRole === 'admin') {
+                adminDashboard.classList.add('active');
+            } else if (currentRole === 'freelancer') {
+                freelancerDashboard.classList.add('active');
+            } else {
+                clientDashboard.classList.add('active');
+            }
+        }
+
+        // Logout Functionality
+        clientLogout.addEventListener('click', () => {
+            signOut(auth);
+            clientDashboard.classList.remove('active');
+            showNotification('Logged out successfully', 'info');
+        });
+
+        freelancerLogout.addEventListener('click', () => {
+            signOut(auth);
+            freelancerDashboard.classList.remove('active');
+            showNotification('Logged out successfully', 'info');
+        });
+
+        adminLogout.addEventListener('click', () => {
+            signOut(auth);
+            adminDashboard.classList.remove('active');
+            showNotification('Admin logged out successfully', 'info');
+        });
+
+        // Admin Functions
+        sendAnnouncementBtn.addEventListener('click', () => {
+            const message = document.getElementById('admin-message').value;
+            if (message.trim()) {
+                // In a real app, this would broadcast to all users
+                showNotification('Announcement sent to all users', 'success');
+                document.getElementById('admin-message').value = '';
+            } else {
+                showNotification('Please enter a message', 'warning');
+            }
+        });
+
+        adminSendMessageBtn.addEventListener('click', async () => {
+            const message = adminMessageInput.value;
+            if (message.trim() && activeChat) {
+                const timestamp = Date.now();
+                const messageData = {
+                    text: message,
+                    sender: 'admin',
+                    timestamp: timestamp,
+                    senderName: 'Admin'
+                };
+                
+                // Save message to database
+                await set(ref(db, `chats/${activeChat}/messages/${timestamp}`), messageData);
+                adminMessageInput.value = '';
+            } else if (!activeChat) {
+                showNotification('Please select a conversation first', 'warning');
+            } else {
+                showNotification('Please enter a message', 'warning');
+            }
+        });
+
+        // Client Chat Functions
+        sendMessageBtn.addEventListener('click', async () => {
+            const message = messageInput.value;
+            if (message.trim() && activeChat) {
+                const timestamp = Date.now();
+                const messageData = {
+                    text: message,
+                    sender: 'client',
+                    timestamp: timestamp,
+                    senderName: currentUser.displayName || 'User'
+                };
+                
+                // Save message to database
+                await set(ref(db, `chats/${activeChat}/messages/${timestamp}`), messageData);
+                messageInput.value = '';
+            } else if (!activeChat) {
+                showNotification('Please select a conversation first', 'warning');
+            } else {
+                showNotification('Please enter a message', 'warning');
+            }
+        });
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessageBtn.click();
+            }
+        });
+
+        // Create Order Function
+        createOrderBtn.addEventListener('click', async () => {
+            const title = orderTitle.value;
+            const description = orderDescription.value;
+            const budget = parseFloat(orderBudget.value);
+            const deadline = new Date(orderDeadline.value).getTime();
+            
+            if (!title || !description || !budget || !deadline) {
+                showNotification('Please fill all fields', 'warning');
+                return;
+            }
+            
+            try {
+                // Generate unique order ID
+                const orderId = Date.now().toString();
+                
+                // Save order to database
+                await set(ref(db, `orders/${orderId}`), {
+                    title: title,
+                    description: description,
+                    budget: budget,
+                    deadline: deadline,
+                    clientId: currentUser.uid,
+                    status: 'pending',
+                    createdAt: Date.now()
+                });
+                
+                showNotification('Order created successfully!', 'success');
+                
+                // Reset form
+                orderTitle.value = '';
+                orderDescription.value = '';
+                orderBudget.value = '';
+                orderDeadline.value = '';
+                filePreview.innerHTML = '';
+            } catch (error) {
+                showNotification('Error creating order: ' + error.message, 'error');
+            }
+        });
+
+        // Chat Functions
+        function setupChat(chatId) {
+            // Remove previous listener if exists
+            if (chatListener) {
+                chatListener();
+            }
+            
+            activeChat = chatId;
+            const messagesRef = ref(db, `chats/${chatId}/messages`);
+            
+            // Listen for new messages
+            chatListener = onValue(messagesRef, (snapshot) => {
+                const messagesContainer = document.getElementById('chat-messages');
+                messagesContainer.innerHTML = '';
+                
+                if (snapshot.exists()) {
+                    const messages = snapshot.val();
+                    const messageKeys = Object.keys(messages);
+                    
+                    messageKeys.sort((a, b) => a - b).forEach(key => {
+                        const message = messages[key];
+                        const messageElement = document.createElement('div');
+                        messageElement.className = `message ${message.sender === 'admin' ? 'received' : 'sent'}`;
+                        messageElement.innerHTML = `
+                            <div>${message.text}</div>
+                            <div class="message-info">${message.senderName} • ${new Date(message.timestamp).toLocaleTimeString()}</div>
+                        `;
+                        messagesContainer.appendChild(messageElement);
+                    });
+                }
+                
+                // Scroll to bottom
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
+        }
+
+        // Auth State Observer - This handles session persistence
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                
+                // Get user role from database
+                const userRef = ref(db, `users/${user.uid}`);
+                const userSnapshot = await get(userRef);
+                
+                if (userSnapshot.exists()) {
+                    currentRole = userSnapshot.val().role;
+                    
+                    // Show appropriate dashboard based on role
+                    showDashboard();
+                } else {
+                    showNotification('User data not found', 'error');
+                }
+            } else {
+                // If no user is logged in, show login modal
+                openModal('login-modal');
+            }
+        });
+
+        // Simulate loading dashboard data
+        function loadDashboardData() {
+            // Simulate loading stats
+            document.getElementById('total-orders').textContent = '12';
+            document.getElementById('active-projects').textContent = '5';
+            document.getElementById('completed-projects').textContent = '7';
+            document.getElementById('pending-orders').textContent = '2';
+            
+            document.getElementById('f-total-clients').textContent = '8';
+            document.getElementById('f-total-orders').textContent = '24';
+            document.getElementById('f-active-projects').textContent = '5';
+            document.getElementById('f-completed-orders').textContent = '19';
+            
+            // Admin stats
+            document.getElementById('admin-total-clients').textContent = '42';
+            document.getElementById('admin-total-orders').textContent = '68';
+            document.getElementById('admin-active-projects').textContent = '18';
+            document.getElementById('admin-completed-orders').textContent = '50';
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboardData();
+        });
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
@@ -943,12 +1452,6 @@
                 
                 <button id="login-submit" class="neon-button" style="width: 100%;">Sign In</button>
                 
-                <div class="social-login">
-                    <button id="google-login" class="social-btn">
-                        <i class="fab fa-google"></i> Sign in with Google
-                    </button>
-                </div>
-                
                 <div class="form-footer">
                     <a href="#" id="forgot-password">Forgot Password?</a>
                     <div class="auth-toggle" data-target="signup">Create Account</div>
@@ -986,12 +1489,6 @@
                 </div>
                 
                 <button id="signup-submit" class="neon-button" style="width: 100%;">Sign Up</button>
-                
-                <div class="social-login">
-                    <button id="google-signup" class="social-btn">
-                        <i class="fab fa-google"></i> Sign up with Google
-                    </button>
-                </div>
                 
                 <div class="form-footer">
                     <div class="auth-toggle" data-target="login">Already have an account?</div>
@@ -1557,517 +2054,5 @@
             </div>
         </div>
     </div>
-
-    <script>
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAgVMWh_xuP9CRptIbaS_nJ7e0j2Dp5sRY",
-            authDomain: "myself-4e877.firebaseapp.com",
-            projectId: "myself-4e877",
-            storageBucket: "myself-4e877.firebasestorage.app",
-            messagingSenderId: "603026482562",
-            appId: "1:603026482562:web:9e790b4884674549ea5b9b",
-            measurementId: "G-4MS84VJ031"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        const storage = firebase.storage();
-
-        // DOM Elements
-        const loginBtn = document.getElementById('login-btn');
-        const signupBtn = document.getElementById('signup-btn');
-        const guestBtn = document.getElementById('guest-btn');
-        const getStartedBtn = document.getElementById('get-started-btn');
-        const loginModal = document.getElementById('login-modal');
-        const signupModal = document.getElementById('signup-modal');
-        const adminDashboard = document.getElementById('admin-dashboard');
-        const clientDashboard = document.getElementById('client-dashboard');
-        const freelancerDashboard = document.getElementById('freelancer-dashboard');
-        const authToggles = document.querySelectorAll('.auth-toggle');
-        const loginSubmit = document.getElementById('login-submit');
-        const signupSubmit = document.getElementById('signup-submit');
-        const googleLogin = document.getElementById('google-login');
-        const googleSignup = document.getElementById('google-signup');
-        const clientLogout = document.getElementById('client-logout');
-        const freelancerLogout = document.getElementById('freelancer-logout');
-        const adminLogout = document.getElementById('admin-logout');
-        const navTabs = document.querySelectorAll('.nav-tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-        const fileUploadArea = document.getElementById('file-upload-area');
-        const fileInput = document.getElementById('file-input');
-        const filePreview = document.getElementById('file-preview');
-        const sendAnnouncementBtn = document.getElementById('send-announcement');
-        const adminSendMessageBtn = document.getElementById('admin-send-message');
-        const adminMessageInput = document.getElementById('admin-message-input');
-        const sendMessageBtn = document.getElementById('send-message');
-        const messageInput = document.getElementById('message-input');
-        const createOrderBtn = document.getElementById('create-order');
-        const orderTitle = document.getElementById('order-title');
-        const orderDescription = document.getElementById('order-description');
-        const orderBudget = document.getElementById('order-budget');
-        const orderDeadline = document.getElementById('order-deadline');
-
-        // Global Variables
-        let currentUser = null;
-        let currentRole = null;
-        let activeChat = null;
-        let chatUnsubscribe = null;
-
-        // Custom Cursor Effect
-        document.addEventListener('mousemove', (e) => {
-            const cursor = document.querySelector('.cursor');
-            const follower = document.querySelector('.cursor-follower');
-            
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
-            
-            setTimeout(() => {
-                follower.style.left = e.clientX + 'px';
-                follower.style.top = e.clientY + 'px';
-            }, 50);
-        });
-
-        // Open Modal Functions
-        function openModal(modalId) {
-            document.getElementById(modalId).classList.add('active');
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-
-        // Event Listeners
-        loginBtn.addEventListener('click', () => openModal('login-modal'));
-        signupBtn.addEventListener('click', () => openModal('signup-modal'));
-        guestBtn.addEventListener('click', () => {
-            // Simulate guest login
-            showNotification('Accessing as guest user', 'info');
-            currentRole = 'guest';
-            document.querySelector('header').innerHTML = `
-                <div class="logo">
-                    <i class="fas fa-rocket"></i>
-                    <span>NexusFreelance</span>
-                </div>
-                <div class="auth-buttons">
-                    <span style="color: #00c6ff;">Guest User</span>
-                    <button id="guest-logout" class="neon-button">Logout</button>
-                </div>
-            `;
-            document.getElementById('guest-logout').addEventListener('click', () => {
-                window.location.reload();
-            });
-        });
-
-        getStartedBtn.addEventListener('click', () => openModal('signup-modal'));
-
-        // Auth Toggles
-        authToggles.forEach(toggle => {
-            toggle.addEventListener('click', () => {
-                const target = toggle.getAttribute('data-target');
-                if (target === 'login') {
-                    closeModal('signup-modal');
-                    openModal('login-modal');
-                } else {
-                    closeModal('login-modal');
-                    openModal('signup-modal');
-                }
-            });
-        });
-
-        // Close modals when clicking outside
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.remove('active');
-                }
-            });
-        });
-
-        // Tab Navigation
-        navTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabName = tab.getAttribute('data-tab');
-                
-                // Update active tab
-                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                
-                // Show active content
-                tabContents.forEach(content => {
-                    content.classList.remove('active');
-                });
-                
-                // Determine dashboard prefix based on current role
-                let prefix = '';
-                if (currentRole === 'admin') prefix = 'admin-';
-                else if (currentRole === 'freelancer') prefix = 'f-';
-                
-                document.getElementById(`${prefix}${tabName}-content`).classList.add('active');
-            });
-        });
-
-        // File Upload Drag & Drop
-        fileUploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            fileUploadArea.classList.add('dragover');
-        });
-
-        fileUploadArea.addEventListener('dragleave', () => {
-            fileUploadArea.classList.remove('dragover');
-        });
-
-        fileUploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            fileUploadArea.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            handleFiles(files);
-        });
-
-        fileUploadArea.addEventListener('click', () => {
-            fileInput.click();
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            handleFiles(e.target.files);
-        });
-
-        function handleFiles(files) {
-            if (files.length > 5) {
-                showNotification('Maximum 5 files allowed', 'error');
-                return;
-            }
-
-            filePreview.innerHTML = '';
-            
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const fileItem = document.createElement('div');
-                fileItem.className = 'file-item';
-                
-                // Determine file type icon
-                let icon = 'fa-file';
-                if (file.type.startsWith('image/')) icon = 'fa-file-image';
-                else if (file.type === 'application/pdf') icon = 'fa-file-pdf';
-                else if (file.type === 'application/zip') icon = 'fa-file-archive';
-                else if (file.type.includes('document')) icon = 'fa-file-word';
-                
-                fileItem.innerHTML = `
-                    <i class="fas ${icon}"></i>
-                    <span>${file.name}</span>
-                    <i class="fas fa-times" style="cursor: pointer;" onclick="this.parentElement.remove()"></i>
-                `;
-                
-                filePreview.appendChild(fileItem);
-            }
-        }
-
-        // Notification System
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            
-            let bgColor = '#4CAF50';
-            if (type === 'error') bgColor = '#f44336';
-            else if (type === 'warning') bgColor = '#ff9800';
-            else if (type === 'info') bgColor = '#2196F3';
-            
-            notification.style.background = bgColor;
-            notification.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i> ${message}`;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
-        }
-
-        // Firebase Authentication
-        loginSubmit.addEventListener('click', async () => {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            
-            try {
-                // Check if admin
-                if (email === 'badhon@gmail.com' && password === 'badhon') {
-                    currentRole = 'admin';
-                    adminDashboard.classList.add('active');
-                    closeModal('login-modal');
-                    showNotification('Admin logged in successfully', 'success');
-                    return;
-                }
-                
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                currentUser = userCredential.user;
-                
-                // Get user role from database
-                const userDoc = await db.collection('users').doc(currentUser.uid).get();
-                if (userDoc.exists) {
-                    currentRole = userDoc.data().role;
-                    
-                    // Hide auth modals, show dashboard
-                    closeModal('login-modal');
-                    showDashboard();
-                    showNotification('Login successful', 'success');
-                } else {
-                    showNotification('User not found in database', 'error');
-                }
-            } catch (error) {
-                showNotification('Login failed: ' + error.message, 'error');
-            }
-        });
-
-        signupSubmit.addEventListener('click', async () => {
-            const name = document.getElementById('signup-name').value;
-            const email = document.getElementById('signup-email').value;
-            const password = document.getElementById('signup-password').value;
-            const role = document.getElementById('user-role').value;
-            
-            try {
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                await userCredential.user.updateProfile({ displayName: name });
-                
-                // Save user data to Firestore
-                await db.collection('users').doc(userCredential.user.uid).set({
-                    email: email,
-                    name: name,
-                    role: role,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    profilePhoto: '',
-                    bio: '',
-                    country: '',
-                    phone: ''
-                });
-                
-                currentUser = userCredential.user;
-                currentRole = role;
-                
-                showNotification('Account created successfully!', 'success');
-                closeModal('signup-modal');
-                showDashboard();
-            } catch (error) {
-                showNotification('Signup failed: ' + error.message, 'error');
-            }
-        });
-
-        googleLogin.addEventListener('click', () => {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            signInWithProvider(provider);
-        });
-
-        googleSignup.addEventListener('click', () => {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            signInWithProvider(provider);
-        });
-
-        async function signInWithProvider(provider) {
-            try {
-                const result = await auth.signInWithPopup(provider);
-                currentUser = result.user;
-                
-                // Check if user exists in our database
-                const userDoc = await db.collection('users').doc(currentUser.uid).get();
-                if (!userDoc.exists) {
-                    await db.collection('users').doc(currentUser.uid).set({
-                        email: currentUser.email,
-                        name: currentUser.displayName,
-                        role: 'client', // Default role for new users
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        profilePhoto: currentUser.photoURL || '',
-                        bio: '',
-                        country: '',
-                        phone: ''
-                    });
-                }
-                
-                // Get user role
-                const updatedUserDoc = await db.collection('users').doc(currentUser.uid).get();
-                currentRole = updatedUserDoc.data().role;
-                
-                closeModal('login-modal');
-                closeModal('signup-modal');
-                showDashboard();
-            } catch (error) {
-                showNotification('Google sign-in failed: ' + error.message, 'error');
-            }
-        }
-
-        // Show Dashboard based on user role
-        function showDashboard() {
-            if (currentRole === 'admin') {
-                adminDashboard.classList.add('active');
-            } else if (currentRole === 'freelancer') {
-                freelancerDashboard.classList.add('active');
-            } else {
-                clientDashboard.classList.add('active');
-            }
-        }
-
-        // Logout Functionality
-        clientLogout.addEventListener('click', () => {
-            auth.signOut();
-            clientDashboard.classList.remove('active');
-            showNotification('Logged out successfully', 'info');
-        });
-
-        freelancerLogout.addEventListener('click', () => {
-            auth.signOut();
-            freelancerDashboard.classList.remove('active');
-            showNotification('Logged out successfully', 'info');
-        });
-
-        adminLogout.addEventListener('click', () => {
-            auth.signOut();
-            adminDashboard.classList.remove('active');
-            showNotification('Admin logged out successfully', 'info');
-        });
-
-        // Admin Functions
-        sendAnnouncementBtn.addEventListener('click', () => {
-            const message = document.getElementById('admin-message').value;
-            if (message.trim()) {
-                showNotification('Announcement sent to all users', 'success');
-                document.getElementById('admin-message').value = '';
-            } else {
-                showNotification('Please enter a message', 'warning');
-            }
-        });
-
-        adminSendMessageBtn.addEventListener('click', () => {
-            const message = adminMessageInput.value;
-            if (message.trim()) {
-                const chatMessages = document.getElementById('admin-chat-messages');
-                const messageElement = document.createElement('div');
-                messageElement.className = 'message sent';
-                messageElement.innerHTML = `
-                    <div>${message}</div>
-                    <div class="message-info">Admin • Just now</div>
-                `;
-                chatMessages.appendChild(messageElement);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-                adminMessageInput.value = '';
-            } else {
-                showNotification('Please enter a message', 'warning');
-            }
-        });
-
-        adminMessageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                adminSendMessageBtn.click();
-            }
-        });
-
-        // Client Chat Functions
-        sendMessageBtn.addEventListener('click', () => {
-            const message = messageInput.value;
-            if (message.trim()) {
-                const chatMessages = document.getElementById('chat-messages');
-                const messageElement = document.createElement('div');
-                messageElement.className = 'message sent';
-                messageElement.innerHTML = `
-                    <div>${message}</div>
-                    <div class="message-info">You • Just now</div>
-                `;
-                chatMessages.appendChild(messageElement);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-                messageInput.value = '';
-                
-                // Simulate admin reply after 2 seconds
-                setTimeout(() => {
-                    const replyElement = document.createElement('div');
-                    replyElement.className = 'message received';
-                    replyElement.innerHTML = `
-                        <div>Thanks for your message. We'll get back to you soon!</div>
-                        <div class="message-info">Admin • Just now</div>
-                    `;
-                    chatMessages.appendChild(replyElement);
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                }, 2000);
-            } else {
-                showNotification('Please enter a message', 'warning');
-            }
-        });
-
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessageBtn.click();
-            }
-        });
-
-        // Create Order Function
-        createOrderBtn.addEventListener('click', async () => {
-            const title = orderTitle.value;
-            const description = orderDescription.value;
-            const budget = orderBudget.value;
-            const deadline = orderDeadline.value;
-            
-            if (!title || !description || !budget || !deadline) {
-                showNotification('Please fill all fields', 'warning');
-                return;
-            }
-            
-            try {
-                // In a real app, we would save this to Firestore
-                showNotification('Order created successfully!', 'success');
-                
-                // Reset form
-                orderTitle.value = '';
-                orderDescription.value = '';
-                orderBudget.value = '';
-                orderDeadline.value = '';
-                filePreview.innerHTML = '';
-            } catch (error) {
-                showNotification('Error creating order: ' + error.message, 'error');
-            }
-        });
-
-        // Auth State Observer - This handles session persistence
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                currentUser = user;
-                
-                // Get user role from database
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists) {
-                    currentRole = userDoc.data().role;
-                    
-                    // Show appropriate dashboard based on role
-                    showDashboard();
-                } else {
-                    showNotification('User data not found', 'error');
-                }
-            } else {
-                // If no user is logged in, show login modal
-                openModal('login-modal');
-            }
-        });
-
-        // Simulate loading dashboard data
-        function loadDashboardData() {
-            // Simulate loading stats
-            document.getElementById('total-orders').textContent = '12';
-            document.getElementById('active-projects').textContent = '5';
-            document.getElementById('completed-projects').textContent = '7';
-            document.getElementById('pending-orders').textContent = '2';
-            
-            document.getElementById('f-total-clients').textContent = '8';
-            document.getElementById('f-total-orders').textContent = '24';
-            document.getElementById('f-active-projects').textContent = '5';
-            document.getElementById('f-completed-orders').textContent = '19';
-            
-            // Admin stats
-            document.getElementById('admin-total-clients').textContent = '42';
-            document.getElementById('admin-total-orders').textContent = '68';
-            document.getElementById('admin-active-projects').textContent = '18';
-            document.getElementById('admin-completed-orders').textContent = '50';
-        }
-
-        // Initialize the app
-        document.addEventListener('DOMContentLoaded', () => {
-            loadDashboardData();
-        });
-    </script>
 </body>
 </html>
