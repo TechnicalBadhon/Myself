@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusFreelance - Professional Freelancing Platform</title>
+    <title>NexusFreelance - Futuristic Freelancing Platform</title>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
         import { getDatabase, ref, set, get, child, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
         import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
@@ -40,6 +40,8 @@
         const authToggles = document.querySelectorAll('.auth-toggle');
         const loginSubmit = document.getElementById('login-submit');
         const signupSubmit = document.getElementById('signup-submit');
+        const googleLogin = document.getElementById('google-login');
+        const googleSignup = document.getElementById('google-signup');
         const clientLogout = document.getElementById('client-logout');
         const freelancerLogout = document.getElementById('freelancer-logout');
         const adminLogout = document.getElementById('admin-logout');
@@ -58,6 +60,8 @@
         const orderDescription = document.getElementById('order-description');
         const orderBudget = document.getElementById('order-budget');
         const orderDeadline = document.getElementById('order-deadline');
+        const updateProfileBtn = document.getElementById('update-profile');
+        const updateAdminProfileBtn = document.getElementById('update-admin-profile');
 
         // Global Variables
         let currentUser = null;
@@ -302,6 +306,78 @@
             }
         });
 
+        googleLogin.addEventListener('click', () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider)
+                .then(async (result) => {
+                    currentUser = result.user;
+                    
+                    // Check if user exists in our database
+                    const userRef = ref(db, `users/${currentUser.uid}`);
+                    const userSnapshot = await get(userRef);
+                    
+                    if (!userSnapshot.exists()) {
+                        await set(userRef, {
+                            email: currentUser.email,
+                            name: currentUser.displayName,
+                            role: 'client', // Default role for new users
+                            createdAt: Date.now(),
+                            profilePhoto: currentUser.photoURL || '',
+                            bio: '',
+                            country: '',
+                            phone: ''
+                        });
+                    }
+                    
+                    // Get user role
+                    const updatedUserSnapshot = await get(userRef);
+                    currentRole = updatedUserSnapshot.val().role;
+                    
+                    closeModal('login-modal');
+                    closeModal('signup-modal');
+                    showDashboard();
+                })
+                .catch(error => {
+                    showNotification('Google sign-in failed: ' + error.message, 'error');
+                });
+        });
+
+        googleSignup.addEventListener('click', () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider)
+                .then(async (result) => {
+                    currentUser = result.user;
+                    
+                    // Check if user exists in our database
+                    const userRef = ref(db, `users/${currentUser.uid}`);
+                    const userSnapshot = await get(userRef);
+                    
+                    if (!userSnapshot.exists()) {
+                        await set(userRef, {
+                            email: currentUser.email,
+                            name: currentUser.displayName,
+                            role: 'client', // Default role for new users
+                            createdAt: Date.now(),
+                            profilePhoto: currentUser.photoURL || '',
+                            bio: '',
+                            country: '',
+                            phone: ''
+                        });
+                    }
+                    
+                    // Get user role
+                    const updatedUserSnapshot = await get(userRef);
+                    currentRole = updatedUserSnapshot.val().role;
+                    
+                    closeModal('login-modal');
+                    closeModal('signup-modal');
+                    showDashboard();
+                })
+                .catch(error => {
+                    showNotification('Google sign-up failed: ' + error.message, 'error');
+                });
+        });
+
         // Show Dashboard based on user role
         function showDashboard() {
             if (currentRole === 'admin') {
@@ -430,6 +506,55 @@
                 filePreview.innerHTML = '';
             } catch (error) {
                 showNotification('Error creating order: ' + error.message, 'error');
+            }
+        });
+
+        // Update Profile Functions
+        updateProfileBtn.addEventListener('click', async () => {
+            const name = document.getElementById('profile-name').value;
+            const email = document.getElementById('profile-email').value;
+            const phone = document.getElementById('profile-phone').value;
+            const country = document.getElementById('profile-country').value;
+            const bio = document.getElementById('profile-bio').value;
+            
+            try {
+                await update(ref(db, `users/${currentUser.uid}`), {
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    country: country,
+                    bio: bio
+                });
+                
+                showNotification('Profile updated successfully!', 'success');
+            } catch (error) {
+                showNotification('Error updating profile: ' + error.message, 'error');
+            }
+        });
+
+        updateAdminProfileBtn.addEventListener('click', async () => {
+            const name = document.getElementById('admin-name').value;
+            const email = document.getElementById('admin-email').value;
+            const phone = document.getElementById('admin-phone').value;
+            const country = document.getElementById('admin-country').value;
+            const bio = document.getElementById('admin-bio').value;
+            const specialty = document.getElementById('admin-specialty').value;
+            const portfolio = document.getElementById('admin-portfolio').value;
+            
+            try {
+                await update(ref(db, `users/${currentUser.uid}`), {
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    country: country,
+                    bio: bio,
+                    specialty: specialty,
+                    portfolio: portfolio
+                });
+                
+                showNotification('Admin profile updated successfully!', 'success');
+            } catch (error) {
+                showNotification('Error updating profile: ' + error.message, 'error');
             }
         });
 
@@ -1452,6 +1577,12 @@
                 
                 <button id="login-submit" class="neon-button" style="width: 100%;">Sign In</button>
                 
+                <div class="social-login">
+                    <button id="google-login" class="social-btn">
+                        <i class="fab fa-google"></i> Sign in with Google
+                    </button>
+                </div>
+                
                 <div class="form-footer">
                     <a href="#" id="forgot-password">Forgot Password?</a>
                     <div class="auth-toggle" data-target="signup">Create Account</div>
@@ -1489,6 +1620,12 @@
                 </div>
                 
                 <button id="signup-submit" class="neon-button" style="width: 100%;">Sign Up</button>
+                
+                <div class="social-login">
+                    <button id="google-signup" class="social-btn">
+                        <i class="fab fa-google"></i> Sign up with Google
+                    </button>
+                </div>
                 
                 <div class="form-footer">
                     <div class="auth-toggle" data-target="login">Already have an account?</div>
@@ -2056,3 +2193,4 @@
     </div>
 </body>
 </html>
+
