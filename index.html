@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusFreelance - Futuristic Freelancing Platform</title>
+    <title>NexusFreelance - Professional Freelancing Platform</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -1614,6 +1614,7 @@
         let currentUser = null;
         let currentRole = null;
         let activeChat = null;
+        let chatUnsubscribe = null;
 
         // Custom Cursor Effect
         document.addEventListener('mousemove', (e) => {
@@ -2019,6 +2020,27 @@
                 filePreview.innerHTML = '';
             } catch (error) {
                 showNotification('Error creating order: ' + error.message, 'error');
+            }
+        });
+
+        // Auth State Observer - This handles session persistence
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                
+                // Get user role from database
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    currentRole = userDoc.data().role;
+                    
+                    // Show appropriate dashboard based on role
+                    showDashboard();
+                } else {
+                    showNotification('User data not found', 'error');
+                }
+            } else {
+                // If no user is logged in, show login modal
+                openModal('login-modal');
             }
         });
 
