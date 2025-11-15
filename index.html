@@ -6,11 +6,9 @@
     <title>FutureFreelance - Ultimate Platform</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
+    <!-- Load the modular SDKs -->
+    <script type="module" src="config.js"></script> <!-- Load Firebase config first -->
+    <script type="module" src="app.js"></script> <!-- Load the main app logic -->
 </head>
 <body>
     <!-- Loading Screen -->
@@ -274,7 +272,5 @@
         <!-- Toast Notifications -->
         <div id="toastContainer" class="toast-container"></div>
     </div>
-
-    <script src="app.js"></script>
 </body>
 </html>
