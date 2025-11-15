@@ -781,6 +781,41 @@
             opacity: 0.8;
         }
 
+        .users-list {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .hero {
@@ -973,6 +1008,7 @@
                 <button class="nav-tab" data-tab="admin-orders">Orders</button>
                 <button class="nav-tab" data-tab="admin-chat">Admin Chat</button>
                 <button class="nav-tab" data-tab="admin-profile">Admin Profile</button>
+                <button class="nav-tab" data-tab="admin-users">User Management</button>
                 <button id="admin-logout" class="neon-button" style="margin-left: auto;">Logout</button>
             </nav>
 
@@ -1155,6 +1191,65 @@
                             <input type="text" id="admin-portfolio" class="form-input" placeholder="Portfolio URL" value="https://badhon-portfolio.com">
                         </div>
                         <button id="update-admin-profile" class="neon-button">Update Profile</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="admin-users-content" class="tab-content">
+                <h3>User Management</h3>
+                <div class="users-list">
+                    <h4>All Users</h4>
+                    <div class="user-item">
+                        <div class="user-info">
+                            <div class="user-avatar">JD</div>
+                            <div>
+                                <h4>John Doe</h4>
+                                <p>john@example.com</p>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="status-badge status-accepted">Client</span>
+                            <button class="neon-button" style="padding: 5px 10px; margin-left: 10px;">View</button>
+                        </div>
+                    </div>
+                    <div class="user-item">
+                        <div class="user-info">
+                            <div class="user-avatar">SJ</div>
+                            <div>
+                                <h4>Sarah Johnson</h4>
+                                <p>sarah@example.com</p>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="status-badge status-in-progress">Freelancer</span>
+                            <button class="neon-button" style="padding: 5px 10px; margin-left: 10px;">View</button>
+                        </div>
+                    </div>
+                    <div class="user-item">
+                        <div class="user-info">
+                            <div class="user-avatar">MR</div>
+                            <div>
+                                <h4>Mike Roberts</h4>
+                                <p>mike@example.com</p>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="status-badge status-completed">Client</span>
+                            <button class="neon-button" style="padding: 5px 10px; margin-left: 10px;">View</button>
+                        </div>
+                    </div>
+                    <div class="user-item">
+                        <div class="user-info">
+                            <div class="user-avatar">EB</div>
+                            <div>
+                                <h4>Emma Brown</h4>
+                                <p>emma@example.com</p>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="status-badge status-in-progress">Freelancer</span>
+                            <button class="neon-button" style="padding: 5px 10px; margin-left: 10px;">View</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1507,10 +1602,18 @@
         const sendAnnouncementBtn = document.getElementById('send-announcement');
         const adminSendMessageBtn = document.getElementById('admin-send-message');
         const adminMessageInput = document.getElementById('admin-message-input');
+        const sendMessageBtn = document.getElementById('send-message');
+        const messageInput = document.getElementById('message-input');
+        const createOrderBtn = document.getElementById('create-order');
+        const orderTitle = document.getElementById('order-title');
+        const orderDescription = document.getElementById('order-description');
+        const orderBudget = document.getElementById('order-budget');
+        const orderDeadline = document.getElementById('order-deadline');
 
         // Global Variables
         let currentUser = null;
         let currentRole = null;
+        let activeChat = null;
 
         // Custom Cursor Effect
         document.addEventListener('mousemove', (e) => {
@@ -1686,16 +1789,17 @@
             const password = document.getElementById('login-password').value;
             
             try {
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                currentUser = userCredential.user;
-                
                 // Check if admin
                 if (email === 'badhon@gmail.com' && password === 'badhon') {
                     currentRole = 'admin';
                     adminDashboard.classList.add('active');
                     closeModal('login-modal');
+                    showNotification('Admin logged in successfully', 'success');
                     return;
                 }
+                
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                currentUser = userCredential.user;
                 
                 // Get user role from database
                 const userDoc = await db.collection('users').doc(currentUser.uid).get();
@@ -1705,6 +1809,7 @@
                     // Hide auth modals, show dashboard
                     closeModal('login-modal');
                     showDashboard();
+                    showNotification('Login successful', 'success');
                 } else {
                     showNotification('User not found in database', 'error');
                 }
@@ -1803,16 +1908,19 @@
         clientLogout.addEventListener('click', () => {
             auth.signOut();
             clientDashboard.classList.remove('active');
+            showNotification('Logged out successfully', 'info');
         });
 
         freelancerLogout.addEventListener('click', () => {
             auth.signOut();
             freelancerDashboard.classList.remove('active');
+            showNotification('Logged out successfully', 'info');
         });
 
         adminLogout.addEventListener('click', () => {
             auth.signOut();
             adminDashboard.classList.remove('active');
+            showNotification('Admin logged out successfully', 'info');
         });
 
         // Admin Functions
@@ -1821,6 +1929,8 @@
             if (message.trim()) {
                 showNotification('Announcement sent to all users', 'success');
                 document.getElementById('admin-message').value = '';
+            } else {
+                showNotification('Please enter a message', 'warning');
             }
         });
 
@@ -1837,12 +1947,78 @@
                 chatMessages.appendChild(messageElement);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
                 adminMessageInput.value = '';
+            } else {
+                showNotification('Please enter a message', 'warning');
             }
         });
 
         adminMessageInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 adminSendMessageBtn.click();
+            }
+        });
+
+        // Client Chat Functions
+        sendMessageBtn.addEventListener('click', () => {
+            const message = messageInput.value;
+            if (message.trim()) {
+                const chatMessages = document.getElementById('chat-messages');
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message sent';
+                messageElement.innerHTML = `
+                    <div>${message}</div>
+                    <div class="message-info">You • Just now</div>
+                `;
+                chatMessages.appendChild(messageElement);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                messageInput.value = '';
+                
+                // Simulate admin reply after 2 seconds
+                setTimeout(() => {
+                    const replyElement = document.createElement('div');
+                    replyElement.className = 'message received';
+                    replyElement.innerHTML = `
+                        <div>Thanks for your message. We'll get back to you soon!</div>
+                        <div class="message-info">Admin • Just now</div>
+                    `;
+                    chatMessages.appendChild(replyElement);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 2000);
+            } else {
+                showNotification('Please enter a message', 'warning');
+            }
+        });
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessageBtn.click();
+            }
+        });
+
+        // Create Order Function
+        createOrderBtn.addEventListener('click', async () => {
+            const title = orderTitle.value;
+            const description = orderDescription.value;
+            const budget = orderBudget.value;
+            const deadline = orderDeadline.value;
+            
+            if (!title || !description || !budget || !deadline) {
+                showNotification('Please fill all fields', 'warning');
+                return;
+            }
+            
+            try {
+                // In a real app, we would save this to Firestore
+                showNotification('Order created successfully!', 'success');
+                
+                // Reset form
+                orderTitle.value = '';
+                orderDescription.value = '';
+                orderBudget.value = '';
+                orderDeadline.value = '';
+                filePreview.innerHTML = '';
+            } catch (error) {
+                showNotification('Error creating order: ' + error.message, 'error');
             }
         });
 
