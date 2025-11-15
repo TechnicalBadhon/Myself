@@ -3,40 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProWork - Find Freelancers & Freelance Jobs</title>
+    <title>ProWork - Global Freelance Platform</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <style>
         /* Global Styles */
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #0f172a;
+            --accent: #06d6a0;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --white: #ffffff;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        :root {
-            --primary: #14a800;
-            --primary-dark: #0d7300;
-            --secondary: #001e00;
-            --light: #f2f7f2;
-            --gray: #5e6d55;
-            --white: #ffffff;
-            --border: #d5e0d5;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
         }
 
         body {
             background-color: var(--light);
             color: var(--secondary);
             line-height: 1.6;
-        }
-
-        a {
-            text-decoration: none;
-            color: inherit;
-        }
-
-        ul {
-            list-style: none;
+            overflow-x: hidden;
         }
 
         .container {
@@ -47,22 +47,26 @@
         }
 
         .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            border: none;
+            font-size: 0.95rem;
         }
 
         .btn-primary {
-            background-color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: var(--white);
-            border: 1px solid var(--primary);
         }
 
         .btn-primary:hover {
-            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
         }
 
         .btn-outline {
@@ -75,6 +79,15 @@
             background-color: var(--light);
         }
 
+        .btn-accent {
+            background-color: var(--accent);
+            color: var(--secondary);
+        }
+
+        .btn-accent:hover {
+            background-color: #05c28f;
+        }
+
         .section {
             padding: 80px 0;
         }
@@ -83,6 +96,10 @@
             font-size: 2.5rem;
             margin-bottom: 20px;
             text-align: center;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .section-subtitle {
@@ -91,6 +108,19 @@
             text-align: center;
             max-width: 700px;
             margin: 0 auto 40px;
+        }
+
+        .card {
+            background-color: var(--white);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
         }
 
         /* Header Styles */
@@ -110,13 +140,16 @@
         }
 
         .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             font-size: 1.8rem;
             font-weight: 700;
             color: var(--primary);
         }
 
-        .logo span {
-            color: var(--secondary);
+        .logo-icon {
+            font-size: 2rem;
         }
 
         .nav-links {
@@ -127,10 +160,26 @@
         .nav-links a {
             font-weight: 500;
             transition: color 0.3s ease;
+            position: relative;
         }
 
         .nav-links a:hover {
             color: var(--primary);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
         }
 
         .nav-actions {
@@ -155,23 +204,137 @@
             width: 200px;
         }
 
+        /* Auth Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: var(--white);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 450px;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .auth-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--gray);
+            transition: color 0.3s ease;
+        }
+
+        .auth-tab.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+
+        .forgot-password a {
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
         /* Hero Section */
         .hero {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: var(--white);
             padding: 100px 0;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" fill="%23ffffff" opacity="0.1"><polygon points="1000,0 1000,100 0,100"></polygon></svg>');
+            background-size: cover;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
         }
 
         .hero h1 {
             font-size: 3.5rem;
             margin-bottom: 20px;
+            font-weight: 700;
         }
 
         .hero p {
             font-size: 1.3rem;
             max-width: 700px;
             margin: 0 auto 30px;
+            opacity: 0.9;
         }
 
         .hero-btns {
@@ -181,8 +344,9 @@
         }
 
         .hero-btns .btn {
-            padding: 12px 30px;
-            border-radius: 25px;
+            padding: 14px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
         }
 
         .btn-white {
@@ -191,7 +355,8 @@
         }
 
         .btn-white:hover {
-            background-color: var(--light);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.2);
         }
 
         .btn-transparent {
@@ -205,10 +370,6 @@
         }
 
         /* Categories Section */
-        .categories {
-            background-color: var(--white);
-        }
-
         .categories-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -216,23 +377,16 @@
         }
 
         .category-card {
-            background-color: var(--white);
-            border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
             text-align: center;
-        }
-
-        .category-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 30px 20px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
         }
 
         .category-icon {
             font-size: 2.5rem;
-            color: var(--primary);
             margin-bottom: 15px;
+            color: var(--primary);
         }
 
         .category-card h3 {
@@ -240,10 +394,6 @@
         }
 
         /* How It Works Section */
-        .how-it-works {
-            background-color: var(--light);
-        }
-
         .steps {
             display: flex;
             justify-content: space-between;
@@ -255,29 +405,25 @@
             flex: 1;
             text-align: center;
             padding: 30px 20px;
-            background-color: var(--white);
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            position: relative;
         }
 
         .step-number {
-            display: inline-block;
-            width: 50px;
-            height: 50px;
-            line-height: 50px;
-            background-color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: var(--white);
             border-radius: 50%;
             font-size: 1.5rem;
             font-weight: 700;
             margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3);
         }
 
         /* Testimonials Section */
-        .testimonials {
-            background-color: var(--white);
-        }
-
         .testimonial-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -285,16 +431,20 @@
             margin-top: 50px;
         }
 
-        .testimonial-card {
-            background-color: var(--light);
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-        }
-
         .testimonial-text {
             font-style: italic;
             margin-bottom: 20px;
+            position: relative;
+        }
+
+        .testimonial-text::before {
+            content: '"';
+            font-size: 3rem;
+            color: var(--primary);
+            opacity: 0.3;
+            position: absolute;
+            top: -15px;
+            left: -10px;
         }
 
         .testimonial-author {
@@ -306,7 +456,7 @@
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background-color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--accent));
             margin-right: 15px;
             display: flex;
             align-items: center;
@@ -316,10 +466,6 @@
         }
 
         /* Freelancers Section */
-        .freelancers {
-            background-color: var(--light);
-        }
-
         .freelancer-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -327,26 +473,15 @@
             margin-top: 50px;
         }
 
-        .freelancer-card {
-            background-color: var(--white);
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease;
-        }
-
-        .freelancer-card:hover {
-            transform: translateY(-5px);
-        }
-
         .freelancer-img {
             height: 150px;
-            background-color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--accent));
             display: flex;
             align-items: center;
             justify-content: center;
             color: var(--white);
             font-size: 3rem;
+            border-radius: 12px 12px 0 0;
         }
 
         .freelancer-info {
@@ -382,9 +517,143 @@
             font-size: 0.8rem;
         }
 
+        /* Live Chat */
+        .chat-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .chat-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .chat-button:hover {
+            transform: scale(1.1);
+        }
+
+        .chat-container {
+            display: none;
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            width: 350px;
+            height: 450px;
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--white);
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            font-size: 0.9rem;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        .message.admin {
+            align-self: flex-start;
+            background-color: var(--light);
+            color: var(--secondary);
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid var(--border);
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            outline: none;
+        }
+
+        .chat-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .chat-action {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background-color: var(--light);
+            transition: background-color 0.3s ease;
+        }
+
+        .chat-action:hover {
+            background-color: var(--border);
+        }
+
+        /* Contact Form */
+        .contact-form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        textarea.form-control {
+            min-height: 150px;
+            resize: vertical;
+        }
+
         /* CTA Section */
         .cta {
-            background: linear-gradient(135deg, var(--secondary) 0%, #003300 100%);
+            background: linear-gradient(135deg, var(--secondary) 0%, #1e293b 100%);
             color: var(--white);
             text-align: center;
             padding: 80px 0;
@@ -418,7 +687,7 @@
         .footer-column h3 {
             font-size: 1.2rem;
             margin-bottom: 20px;
-            color: var(--primary);
+            color: var(--accent);
         }
 
         .footer-links li {
@@ -426,7 +695,7 @@
         }
 
         .footer-links a:hover {
-            color: var(--primary);
+            color: var(--accent);
         }
 
         .social-links {
@@ -436,18 +705,18 @@
         }
 
         .social-links a {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             width: 40px;
             height: 40px;
-            line-height: 40px;
-            text-align: center;
             background-color: rgba(255, 255, 255, 0.1);
             border-radius: 50%;
             transition: background-color 0.3s ease;
         }
 
         .social-links a:hover {
-            background-color: var(--primary);
+            background-color: var(--accent);
         }
 
         .footer-bottom {
@@ -485,6 +754,11 @@
             .search-box {
                 display: none;
             }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
         }
     </style>
 </head>
@@ -493,7 +767,10 @@
     <header>
         <div class="container">
             <nav class="navbar">
-                <a href="#" class="logo">Pro<span>Work</span></a>
+                <a href="#" class="logo">
+                    <i class="fas fa-rocket logo-icon"></i>
+                    ProWork
+                </a>
                 
                 <ul class="nav-links">
                     <li><a href="#">Find Work</a></li>
@@ -506,23 +783,75 @@
                 <div class="nav-actions">
                     <div class="search-box">
                         <i class="fas fa-search"></i>
-                        <input type="text" placeholder="Search">
+                        <input type="text" placeholder="Search for jobs or freelancers">
                     </div>
-                    <a href="#" class="btn btn-outline">Log In</a>
-                    <a href="#" class="btn btn-primary">Sign Up</a>
+                    <button id="login-btn" class="btn btn-outline">Log In</button>
+                    <button id="signup-btn" class="btn btn-primary">Sign Up</button>
                 </div>
             </nav>
         </div>
     </header>
 
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="auth-tabs">
+                <div class="auth-tab active" data-tab="login">Log In</div>
+                <div class="auth-tab" data-tab="signup">Sign Up</div>
+            </div>
+            
+            <form id="login-form" class="auth-form active">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" class="form-control" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" class="form-control" placeholder="Enter your password" required>
+                </div>
+                <div class="forgot-password">
+                    <a href="#" id="forgot-password">Forgot Password?</a>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Log In</button>
+            </form>
+            
+            <form id="signup-form" class="auth-form">
+                <div class="form-group">
+                    <label for="signup-name">Full Name</label>
+                    <input type="text" id="signup-name" class="form-control" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" class="form-control" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" class="form-control" placeholder="Create a password" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-role">I am a</label>
+                    <select id="signup-role" class="form-control" required>
+                        <option value="">Select your role</option>
+                        <option value="client">Client</option>
+                        <option value="freelancer">Freelancer</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Hero Section -->
     <section class="hero">
         <div class="container">
-            <h1>Find the perfect freelance services for your business</h1>
-            <p>Connect with skilled freelancers from around the world and get your projects done efficiently.</p>
-            <div class="hero-btns">
-                <a href="#" class="btn btn-white">Find Freelancers</a>
-                <a href="#" class="btn btn-transparent">Find Work</a>
+            <div class="hero-content">
+                <h1>Find the perfect freelance services for your business</h1>
+                <p>Connect with skilled freelancers from around the world and get your projects done efficiently.</p>
+                <div class="hero-btns">
+                    <a href="#" class="btn btn-white">Find Freelancers</a>
+                    <a href="#" class="btn btn-transparent">Find Work</a>
+                </div>
             </div>
         </div>
     </section>
@@ -534,7 +863,7 @@
             <p class="section-subtitle">Browse the most in-demand categories for freelance work</p>
             
             <div class="categories-grid">
-                <div class="category-card">
+                <div class="card category-card">
                     <div class="category-icon">
                         <i class="fas fa-code"></i>
                     </div>
@@ -542,7 +871,7 @@
                     <p>Web, mobile, and software development</p>
                 </div>
                 
-                <div class="category-card">
+                <div class="card category-card">
                     <div class="category-icon">
                         <i class="fas fa-pen-nib"></i>
                     </div>
@@ -550,7 +879,7 @@
                     <p>Graphic design, UI/UX, and branding</p>
                 </div>
                 
-                <div class="category-card">
+                <div class="card category-card">
                     <div class="category-icon">
                         <i class="fas fa-chart-line"></i>
                     </div>
@@ -558,7 +887,7 @@
                     <p>SEO, social media, and content marketing</p>
                 </div>
                 
-                <div class="category-card">
+                <div class="card category-card">
                     <div class="category-icon">
                         <i class="fas fa-file-alt"></i>
                     </div>
@@ -576,19 +905,19 @@
             <p class="section-subtitle">Simple steps to get your projects done with top freelancers</p>
             
             <div class="steps">
-                <div class="step">
+                <div class="card step">
                     <div class="step-number">1</div>
                     <h3>Post a Job</h3>
                     <p>Create a detailed job post outlining your project requirements and budget.</p>
                 </div>
                 
-                <div class="step">
+                <div class="card step">
                     <div class="step-number">2</div>
                     <h3>Hire Freelancers</h3>
                     <p>Review proposals, interview candidates, and hire the best fit for your project.</p>
                 </div>
                 
-                <div class="step">
+                <div class="card step">
                     <div class="step-number">3</div>
                     <h3>Get Work Done</h3>
                     <p>Collaborate efficiently using our platform and pay securely upon completion.</p>
@@ -604,8 +933,8 @@
             <p class="section-subtitle">See what our clients and freelancers have to say about ProWork</p>
             
             <div class="testimonial-grid">
-                <div class="testimonial-card">
-                    <p class="testimonial-text">"ProWork has transformed how I find clients for my design business. The platform is intuitive and the quality of projects is excellent."</p>
+                <div class="card testimonial-card">
+                    <p class="testimonial-text">ProWork has transformed how I find clients for my design business. The platform is intuitive and the quality of projects is excellent.</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">SD</div>
                         <div>
@@ -615,8 +944,8 @@
                     </div>
                 </div>
                 
-                <div class="testimonial-card">
-                    <p class="testimonial-text">"As a startup, we needed reliable developers quickly. ProWork connected us with talented professionals who delivered beyond expectations."</p>
+                <div class="card testimonial-card">
+                    <p class="testimonial-text">As a startup, we needed reliable developers quickly. ProWork connected us with talented professionals who delivered beyond expectations.</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">MT</div>
                         <div>
@@ -626,8 +955,8 @@
                     </div>
                 </div>
                 
-                <div class="testimonial-card">
-                    <p class="testimonial-text">"I've been able to build a successful freelance career thanks to ProWork. The payment protection and client communication tools are fantastic."</p>
+                <div class="card testimonial-card">
+                    <p class="testimonial-text">I've been able to build a successful freelance career thanks to ProWork. The payment protection and client communication tools are fantastic.</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">AL</div>
                         <div>
@@ -647,7 +976,7 @@
             <p class="section-subtitle">Browse through our community of skilled professionals</p>
             
             <div class="freelancer-grid">
-                <div class="freelancer-card">
+                <div class="card freelancer-card">
                     <div class="freelancer-img">
                         <i class="fas fa-user"></i>
                     </div>
@@ -671,7 +1000,7 @@
                     </div>
                 </div>
                 
-                <div class="freelancer-card">
+                <div class="card freelancer-card">
                     <div class="freelancer-img">
                         <i class="fas fa-user"></i>
                     </div>
@@ -695,7 +1024,7 @@
                     </div>
                 </div>
                 
-                <div class="freelancer-card">
+                <div class="card freelancer-card">
                     <div class="freelancer-img">
                         <i class="fas fa-user"></i>
                     </div>
@@ -719,7 +1048,7 @@
                     </div>
                 </div>
                 
-                <div class="freelancer-card">
+                <div class="card freelancer-card">
                     <div class="freelancer-img">
                         <i class="fas fa-user"></i>
                     </div>
@@ -742,6 +1071,38 @@
                         <a href="#" class="btn btn-outline">View Profile</a>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="section contact">
+        <div class="container">
+            <h2 class="section-title">Contact Us</h2>
+            <p class="section-subtitle">Have questions or need assistance? Reach out to our team</p>
+            
+            <div class="contact-form">
+                <form id="contact-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contact-name">Full Name</label>
+                            <input type="text" id="contact-name" class="form-control" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contact-email">Email</label>
+                            <input type="email" id="contact-email" class="form-control" placeholder="Enter your email" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-subject">Subject</label>
+                        <input type="text" id="contact-subject" class="form-control" placeholder="Enter the subject" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-message">Message</label>
+                        <textarea id="contact-message" class="form-control" placeholder="Enter your message" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                </form>
             </div>
         </div>
     </section>
@@ -810,41 +1171,427 @@
         </div>
     </footer>
 
+    <!-- Live Chat Widget -->
+    <div class="chat-widget">
+        <div class="chat-button" id="chat-toggle">
+            <i class="fas fa-comments"></i>
+        </div>
+        <div class="chat-container" id="chat-container">
+            <div class="chat-header">
+                <div>
+                    <h3>Live Support</h3>
+                    <p>We're online. How can we help?</p>
+                </div>
+                <div>
+                    <i class="fas fa-times" id="close-chat"></i>
+                </div>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <div class="message admin">
+                    Hello! How can I assist you today?
+                </div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="chat-input" placeholder="Type your message...">
+                <div class="chat-actions">
+                    <div class="chat-action" id="send-file">
+                        <i class="fas fa-paperclip"></i>
+                    </div>
+                    <div class="chat-action" id="send-voice">
+                        <i class="fas fa-microphone"></i>
+                    </div>
+                    <div class="chat-action" id="send-message">
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Simple JavaScript for interactive elements
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add animation to category cards on scroll
-            const observerOptions = {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            };
-            
-            const observer = new IntersectionObserver(function(entries) {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.style.opacity = 1;
-                        entry.target.style.transform = 'translateY(0)';
-                    }
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAgVMWh_xuP9CRptIbaS_nJ7e0j2Dp5sRY",
+            authDomain: "myself-4e877.firebaseapp.com",
+            projectId: "myself-4e877",
+            storageBucket: "myself-4e877.firebasestorage.app",
+            messagingSenderId: "603026482562",
+            appId: "1:603026482562:web:9e790b4884674549ea5b9b",
+            measurementId: "G-4MS84VJ031"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // DOM Elements
+        const loginBtn = document.getElementById('login-btn');
+        const signupBtn = document.getElementById('signup-btn');
+        const authModal = document.getElementById('auth-modal');
+        const closeModal = document.querySelector('.close-modal');
+        const authTabs = document.querySelectorAll('.auth-tab');
+        const authForms = document.querySelectorAll('.auth-form');
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const forgotPassword = document.getElementById('forgot-password');
+        const contactForm = document.getElementById('contact-form');
+        const chatToggle = document.getElementById('chat-toggle');
+        const chatContainer = document.getElementById('chat-container');
+        const closeChat = document.getElementById('close-chat');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const sendMessageBtn = document.getElementById('send-message');
+        const sendFileBtn = document.getElementById('send-file');
+        const sendVoiceBtn = document.getElementById('send-voice');
+
+        // Auth Modal Toggle
+        loginBtn.addEventListener('click', () => {
+            authModal.style.display = 'flex';
+        });
+
+        signupBtn.addEventListener('click', () => {
+            authModal.style.display = 'flex';
+            switchAuthTab('signup');
+        });
+
+        closeModal.addEventListener('click', () => {
+            authModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === authModal) {
+                authModal.style.display = 'none';
+            }
+        });
+
+        // Auth Tab Switching
+        function switchAuthTab(tabName) {
+            authTabs.forEach(tab => {
+                if (tab.dataset.tab === tabName) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+
+            authForms.forEach(form => {
+                if (form.id === `${tabName}-form`) {
+                    form.classList.add('active');
+                } else {
+                    form.classList.remove('active');
+                }
+            });
+        }
+
+        authTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                switchAuthTab(tab.dataset.tab);
+            });
+        });
+
+        // Login Form Submission
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Signed in
+                    const user = userCredential.user;
+                    authModal.style.display = 'none';
+                    loginBtn.textContent = 'My Account';
+                    signupBtn.style.display = 'none';
+                    showNotification('Successfully logged in!', 'success');
+                })
+                .catch((error) => {
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    showNotification(errorMessage, 'error');
                 });
-            }, observerOptions);
+        });
+
+        // Signup Form Submission
+        signupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const role = document.getElementById('signup-role').value;
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Signed up
+                    const user = userCredential.user;
+
+                    // Save user data to Firestore
+                    return db.collection('users').doc(user.uid).set({
+                        name: name,
+                        email: email,
+                        role: role,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                })
+                .then(() => {
+                    authModal.style.display = 'none';
+                    loginBtn.textContent = 'My Account';
+                    signupBtn.style.display = 'none';
+                    showNotification('Account created successfully!', 'success');
+                })
+                .catch((error) => {
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    showNotification(errorMessage, 'error');
+                });
+        });
+
+        // Forgot Password
+        forgotPassword.addEventListener('click', (e) => {
+            e.preventDefault();
+            const email = prompt('Please enter your email address:');
             
-            // Observe category cards
-            const categoryCards = document.querySelectorAll('.category-card');
-            categoryCards.forEach(card => {
-                card.style.opacity = 0;
-                card.style.transform = 'translateY(20px)';
-                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                observer.observe(card);
+            if (email) {
+                auth.sendPasswordResetEmail(email)
+                    .then(() => {
+                        showNotification('Password reset email sent!', 'success');
+                    })
+                    .catch((error) => {
+                        showNotification(error.message, 'error');
+                    });
+            }
+        });
+
+        // Contact Form Submission
+        contactForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('contact-name').value;
+            const email = document.getElementById('contact-email').value;
+            const subject = document.getElementById('contact-subject').value;
+            const message = document.getElementById('contact-message').value;
+
+            // Save contact form data to Firestore
+            db.collection('contacts').add({
+                name: name,
+                email: email,
+                subject: subject,
+                message: message,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                showNotification('Message sent successfully!', 'success');
+                contactForm.reset();
+            })
+            .catch((error) => {
+                showNotification('Error sending message. Please try again.', 'error');
             });
+        });
+
+        // Chat Functionality
+        chatToggle.addEventListener('click', () => {
+            chatContainer.style.display = 'flex';
+        });
+
+        closeChat.addEventListener('click', () => {
+            chatContainer.style.display = 'none';
+        });
+
+        sendMessageBtn.addEventListener('click', sendChatMessage);
+
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
+
+        function sendChatMessage() {
+            const message = chatInput.value.trim();
+            if (message) {
+                // Add user message to chat
+                addMessageToChat(message, 'user');
+                
+                // Clear input
+                chatInput.value = '';
+                
+                // Simulate admin response after a short delay
+                setTimeout(() => {
+                    const responses = [
+                        "Thanks for your message! How can I assist you?",
+                        "I understand. Let me check that for you.",
+                        "We'll get back to you shortly with more information.",
+                        "Is there anything else I can help with?"
+                    ];
+                    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                    addMessageToChat(randomResponse, 'admin');
+                }, 1000);
+            }
+        }
+
+        function addMessageToChat(message, sender) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', sender);
+            messageElement.textContent = message;
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // File Upload for Chat
+        sendFileBtn.addEventListener('click', () => {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '*/*';
+            fileInput.click();
             
-            // Observe freelancer cards
-            const freelancerCards = document.querySelectorAll('.freelancer-card');
-            freelancerCards.forEach(card => {
-                card.style.opacity = 0;
-                card.style.transform = 'translateY(20px)';
-                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                observer.observe(card);
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    // Upload file to Firebase Storage
+                    const storageRef = storage.ref();
+                    const fileRef = storageRef.child(`chat_files/${Date.now()}_${file.name}`);
+                    
+                    fileRef.put(file)
+                        .then((snapshot) => {
+                            return snapshot.ref.getDownloadURL();
+                        })
+                        .then((downloadURL) => {
+                            addMessageToChat(`File uploaded: ${file.name}`, 'user');
+                            // In a real app, you would save this URL to Firestore
+                        })
+                        .catch((error) => {
+                            showNotification('Error uploading file', 'error');
+                        });
+                }
             });
+        });
+
+        // Voice Message for Chat
+        let mediaRecorder;
+        let audioChunks = [];
+
+        sendVoiceBtn.addEventListener('click', () => {
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        });
+
+        function startRecording() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        // Upload audio to Firebase Storage
+                        const storageRef = storage.ref();
+                        const audioRef = storageRef.child(`chat_audio/${Date.now()}_voice_message.wav`);
+                        
+                        audioRef.put(audioBlob)
+                            .then((snapshot) => {
+                                return snapshot.ref.getDownloadURL();
+                            })
+                            .then((downloadURL) => {
+                                addMessageToChat('Voice message sent', 'user');
+                                // In a real app, you would save this URL to Firestore
+                            })
+                            .catch((error) => {
+                                showNotification('Error uploading voice message', 'error');
+                            });
+                    };
+
+                    mediaRecorder.start();
+                    sendVoiceBtn.innerHTML = '<i class="fas fa-stop"></i>';
+                })
+                .catch(error => {
+                    showNotification('Error accessing microphone', 'error');
+                });
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                sendVoiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                
+                // Stop all tracks
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        // Notification System
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.padding = '15px 20px';
+            notification.style.borderRadius = '8px';
+            notification.style.color = 'white';
+            notification.style.zIndex = '3000';
+            notification.style.fontWeight = '500';
+            notification.style.boxShadow = '0 5px 15px rgba(0,0,0,0.2)';
+            
+            if (type === 'success') {
+                notification.style.backgroundColor = 'var(--success)';
+            } else if (type === 'error') {
+                notification.style.backgroundColor = 'var(--error)';
+            } else {
+                notification.style.backgroundColor = 'var(--primary)';
+            }
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
+        }
+
+        // Check Auth State
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                loginBtn.textContent = 'My Account';
+                signupBtn.style.display = 'none';
+                
+                // Check if user is admin
+                if (user.email === 'admin@gmail.com') {
+                    // Add admin functionality
+                    console.log('Admin user detected');
+                }
+            } else {
+                loginBtn.textContent = 'Log In';
+                signupBtn.style.display = 'inline-block';
+            }
+        });
+
+        // Animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = 1;
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe elements for animation
+        const animatedElements = document.querySelectorAll('.card, .section-title, .section-subtitle');
+        animatedElements.forEach(el => {
+            el.style.opacity = 0;
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            observer.observe(el);
         });
     </script>
 </body>
